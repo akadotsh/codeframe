@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Braces, Check, Download, Monitor, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,6 +26,9 @@ const samples: Record<string, string> = {
 };
 
 const extensions: Record<string, string> = { TypeScript: "ts", JavaScript: "js", Python: "py", CSS: "css", Rust: "rs", Go: "go" };
+const languageIds: Record<string, "typescript" | "javascript" | "python" | "css" | "rust" | "go"> = { TypeScript: "typescript", JavaScript: "javascript", Python: "python", CSS: "css", Rust: "rust", Go: "go" };
+const highlightTheme = "github-dark-default";
+const loadHighlighter = () => import("./highlighter").then((module) => module.highlighterPromise);
 
 function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
   ctx.beginPath();
@@ -56,6 +59,11 @@ export function App() {
 
   const downloadPng = async () => {
     await document.fonts.ready;
+    const highlighter = await loadHighlighter();
+    const highlightedLines = highlighter.codeToTokens(code, {
+      lang: languageIds[language],
+      theme: highlightTheme,
+    }).tokens;
     const scale = 2;
     const width = 1200;
     const lineHeight = fontSize * 1.65;
@@ -96,10 +104,15 @@ export function App() {
     }
     const codeY = y + chromeHeight + 38;
     ctx.font = `430 ${fontSize}px 'Geist Mono Variable', ui-monospace, monospace`;
-    lines.forEach((line, index) => {
+    highlightedLines.forEach((tokens, index) => {
       const baseline = codeY + index * lineHeight;
       if (lineNumbers) { ctx.fillStyle = palette.muted; ctx.textAlign = "right"; ctx.fillText(String(index + 1), x + 62, baseline); ctx.textAlign = "left"; }
-      ctx.fillStyle = palette.text; ctx.fillText(line || " ", x + (lineNumbers ? 94 : 46), baseline);
+      let tokenX = x + (lineNumbers ? 94 : 46);
+      tokens.forEach((token) => {
+        ctx.fillStyle = token.color || palette.text;
+        ctx.fillText(token.content || " ", tokenX, baseline);
+        tokenX += ctx.measureText(token.content).width;
+      });
     });
     ctx.restore();
     canvas.toBlob((blob) => {
@@ -125,7 +138,7 @@ export function App() {
               <div className="grain" aria-hidden="true" />
               <div className="code-window" style={{ borderRadius: `${radius}px`, background: palette.card, color: palette.text }}>
                 {windowChrome && <div className="window-bar"><div className="window-side">{mode === "window" ? <span className="traffic"><i /><i /><i /></span> : <span className="terminal-glyph" style={{ color: palette.accent }}>&gt;_</span>}</div><input value={title} onChange={(event) => setTitle(event.target.value)} aria-label="Snippet title" /><span className="language-pill">{language}</span></div>}
-                <div className="editor-shell" style={{ fontSize: `${fontSize}px` }}>{lineNumbers && <pre className="line-numbers" style={{ color: palette.muted }}>{lines.map((_, i) => `${i + 1}\n`)}</pre>}<textarea aria-label="Code snippet" value={code} onChange={(event) => setCode(event.target.value)} spellCheck={false} style={{ color: palette.text, caretColor: palette.accent }} /></div>
+                <div className="editor-shell" style={{ fontSize: `${fontSize}px` }}>{lineNumbers && <pre className="line-numbers" style={{ color: palette.muted }}>{lines.map((_, i) => `${i + 1}\n`)}</pre>}<SyntaxEditor code={code} language={language} accent={palette.accent} onChange={setCode} /></div>
               </div>
             </div>
           </div>
@@ -147,4 +160,38 @@ export function App() {
 
 function RangeControl({ label, value, min, max, unit, onChange }: { label: string; value: number; min: number; max: number; unit: string; onChange: (value: number) => void }) {
   return <div className="setting-group range-control"><div className="setting-label"><span>{label}</span><output>{value}{unit}</output></div><Slider value={[value]} min={min} max={max} step={1} onValueChange={(next) => onChange(next[0])} aria-label={label} /></div>;
+}
+
+function SyntaxEditor({ code, language, accent, onChange }: { code: string; language: string; accent: string; onChange: (code: string) => void }) {
+  const [highlighted, setHighlighted] = useState("");
+
+  useEffect(() => {
+    let current = true;
+    const timeout = window.setTimeout(async () => {
+      const highlighter = await loadHighlighter();
+      const html = highlighter.codeToHtml(code || " ", {
+        lang: languageIds[language],
+        theme: highlightTheme,
+      });
+      if (current) setHighlighted(html);
+    }, 40);
+
+    return () => {
+      current = false;
+      window.clearTimeout(timeout);
+    };
+  }, [code, language]);
+
+  return (
+    <div className="syntax-editor">
+      <div className="highlight-layer" aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlighted }} />
+      <textarea
+        aria-label="Code snippet"
+        value={code}
+        onChange={(event) => onChange(event.target.value)}
+        spellCheck={false}
+        style={{ caretColor: accent }}
+      />
+    </div>
+  );
 }
