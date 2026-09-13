@@ -199,14 +199,6 @@ export function App() {
     gradient.addColorStop(1, palette.colors[1]);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
-    ctx.fillStyle = "rgba(255,255,255,.08)";
-    for (let x = -height; x < width; x += 54) {
-      ctx.save();
-      ctx.translate(x, 0);
-      ctx.rotate(-0.34);
-      ctx.fillRect(0, -height / 2, 1, height * 2);
-      ctx.restore();
-    }
     const x = padding;
     const y = padding;
     const cardWidth = width - padding * 2;
