@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Braces, Check, ChevronDown, Download, Monitor, Terminal } from "lucide-react";
+import { Braces, Check, ChevronDown, Monitor, Terminal } from "lucide-react";
+import { DropdownMenu } from "radix-ui";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -49,6 +50,19 @@ const aspectRatios = [
 
 type AspectRatio = (typeof aspectRatios)[number]["value"];
 type PreviewMode = "window" | "terminal";
+type ImageFormat = "png" | "webp" | "jpeg";
+
+const imageFormats: Array<{
+  value: ImageFormat;
+  label: string;
+  mimeType: string;
+  extension: string;
+  quality?: number;
+}> = [
+  { value: "png", label: "PNG", mimeType: "image/png", extension: "png" },
+  { value: "webp", label: "WebP", mimeType: "image/webp", extension: "webp", quality: 0.92 },
+  { value: "jpeg", label: "JPEG", mimeType: "image/jpeg", extension: "jpg", quality: 0.92 },
+];
 
 function roundedRect(
   ctx: CanvasRenderingContext2D,
@@ -74,7 +88,8 @@ export function App() {
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("auto");
   const [lineNumbers, setLineNumbers] = useState(true);
   const [title, setTitle] = useState("hello-world.ts");
-  const [downloaded, setDownloaded] = useState(false);
+  const [imageFormat, setImageFormat] = useState<ImageFormat>("png");
+  const [saved, setSaved] = useState(false);
   const palette = palettes[paletteIndex];
   const visiblePalettes = showAllPalettes ? palettes : palettes.slice(0, 6);
   const lines = useMemo(() => code.split("\n"), [code]);
@@ -98,7 +113,7 @@ export function App() {
     if (code === previousSample) setCode(samples[next]);
   };
 
-  const downloadPng = async () => {
+  const saveImage = async (formatValue: ImageFormat) => {
     await document.fonts.ready;
     const highlighter = await loadHighlighter();
     const highlightedLines = highlighter.codeToTokens(code, {
@@ -177,16 +192,21 @@ export function App() {
       });
     });
     ctx.restore();
-    canvas.toBlob((blob) => {
-      if (!blob) return;
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = `${title.replace(/\.[^.]+$/, "") || "vignette"}.png`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-      setDownloaded(true);
-      window.setTimeout(() => setDownloaded(false), 1800);
-    }, "image/png");
+    const format = imageFormats.find((option) => option.value === formatValue)!;
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `${title.replace(/\.[^.]+$/, "") || "vignette"}.${format.extension}`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        setSaved(true);
+        window.setTimeout(() => setSaved(false), 1800);
+      },
+      format.mimeType,
+      format.quality,
+    );
   };
 
   return (
@@ -199,7 +219,12 @@ export function App() {
           <span>Vignette</span>
         </a>
         <div className="topbar-actions">
-          <ExportButton downloaded={downloaded} onClick={downloadPng} />
+          <SaveControl
+            format={imageFormat}
+            saved={saved}
+            onFormatChange={setImageFormat}
+            onSave={saveImage}
+          />
         </div>
       </header>
 
@@ -383,12 +408,54 @@ export function App() {
   );
 }
 
-function ExportButton({ downloaded, onClick }: { downloaded: boolean; onClick: () => void }) {
+function SaveControl({
+  format,
+  saved,
+  onFormatChange,
+  onSave,
+}: {
+  format: ImageFormat;
+  saved: boolean;
+  onFormatChange: (format: ImageFormat) => void;
+  onSave: (format: ImageFormat) => void;
+}) {
+  const selectedFormat = imageFormats.find((option) => option.value === format)!;
+
   return (
-    <Button className="download-button" onClick={onClick} aria-live="polite">
-      {downloaded ? <Check /> : <Download />}
-      {downloaded ? "Exported" : "Export PNG"}
-    </Button>
+    <div className="save-control">
+      <Button className="save-button" onClick={() => onSave(format)} aria-live="polite">
+        {saved ? "Saved" : `Save ${selectedFormat.label}`}
+      </Button>
+      <DropdownMenu.Root>
+        <DropdownMenu.Trigger asChild>
+          <button className="save-menu-trigger" aria-label="Choose image format">
+            <ChevronDown />
+          </button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Portal>
+          <DropdownMenu.Content className="save-menu-content" align="end" sideOffset={6}>
+            <DropdownMenu.RadioGroup
+              value={format}
+              onValueChange={(next) => onFormatChange(next as ImageFormat)}
+            >
+              {imageFormats.map((option) => (
+                <DropdownMenu.RadioItem
+                  className="save-menu-item"
+                  key={option.value}
+                  value={option.value}
+                >
+                  <span>{option.label}</span>
+                  <small>.{option.extension}</small>
+                  <DropdownMenu.ItemIndicator>
+                    <Check />
+                  </DropdownMenu.ItemIndicator>
+                </DropdownMenu.RadioItem>
+              ))}
+            </DropdownMenu.RadioGroup>
+          </DropdownMenu.Content>
+        </DropdownMenu.Portal>
+      </DropdownMenu.Root>
+    </div>
   );
 }
 

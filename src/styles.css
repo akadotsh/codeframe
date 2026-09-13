@@ -94,11 +94,13 @@ button {
   display: flex;
   align-items: center;
 }
-.download-button {
+.save-control {
+  display: flex;
+}
+.save-button,
+.save-menu-trigger {
   height: 36px;
-  padding: 0 14px;
   border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 9px;
   background: linear-gradient(180deg, #9b90e3, #887bd1);
   color: #121019;
   box-shadow:
@@ -108,11 +110,67 @@ button {
     transform 140ms var(--ease-out),
     filter 160ms ease;
 }
-.download-button:active {
+.save-button {
+  min-width: 104px;
+  padding: 0 14px;
+  border-radius: 9px 0 0 9px;
+  border-right: 0;
+}
+.save-menu-trigger {
+  width: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 0 9px 9px 0;
+  cursor: pointer;
+}
+.save-button:active,
+.save-menu-trigger:active {
   transform: scale(0.97);
 }
-.download-button svg {
-  width: 17px;
+.save-menu-trigger svg {
+  width: 15px;
+}
+.save-menu-content {
+  z-index: 50;
+  min-width: 164px;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(25, 24, 32, 0.97);
+  color: #f2f1f4;
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.save-menu-item {
+  height: 34px;
+  display: grid;
+  grid-template-columns: 1fr auto 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px;
+  border-radius: 6px;
+  color: #c6c3cc;
+  cursor: default;
+  font-size: 12px;
+  outline: none;
+}
+.save-menu-item small {
+  color: #67646f;
+  font:
+    10px "Geist Mono Variable",
+    ui-monospace,
+    monospace;
+}
+.save-menu-item svg {
+  width: 14px;
+}
+.save-menu-item[data-highlighted] {
+  background: rgba(143, 131, 223, 0.16);
+  color: #fff;
 }
 .workspace {
   min-height: calc(100vh - 68px);
@@ -609,7 +667,8 @@ button {
     border-color: rgba(255, 255, 255, 0.2);
     color: #aaa6b2;
   }
-  .download-button:hover {
+  .save-button:hover,
+  .save-menu-trigger:hover {
     filter: brightness(1.06);
   }
 }
@@ -660,11 +719,11 @@ button {
     height: 62px;
     padding: 0 15px;
   }
-  .download-button svg {
-    display: none;
-  }
-  .download-button {
+  .save-button,
+  .save-menu-trigger {
     height: 34px;
+  }
+  .save-button {
     padding: 0 11px;
   }
   .workspace {
@@ -689,7 +748,8 @@ button {
   .palette svg,
   .palette-expand svg,
   .aspect-ratio-option,
-  .download-button,
+  .save-button,
+  .save-menu-trigger,
   .segmented button,
   .code-window,
   .preview-stage,
