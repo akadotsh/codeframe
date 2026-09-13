@@ -44,7 +44,6 @@ export function App() {
   const [radius, setRadius] = useState(22);
   const [fontSize, setFontSize] = useState(16);
   const [lineNumbers, setLineNumbers] = useState(true);
-  const [windowChrome, setWindowChrome] = useState(true);
   const [title, setTitle] = useState("hello-world.ts");
   const [downloaded, setDownloaded] = useState(false);
   const palette = palettes[paletteIndex];
@@ -67,7 +66,7 @@ export function App() {
     const scale = 2;
     const width = 1200;
     const lineHeight = fontSize * 1.65;
-    const chromeHeight = windowChrome ? 70 : 24;
+    const chromeHeight = 70;
     const cardHeight = Math.max(360, lines.length * lineHeight + chromeHeight + 76);
     const height = cardHeight + padding * 2;
     const canvas = document.createElement("canvas");
@@ -92,16 +91,14 @@ export function App() {
     ctx.shadowColor = "rgba(0,0,0,.32)"; ctx.shadowBlur = 44; ctx.shadowOffsetY = 22;
     roundedRect(ctx, x, y, cardWidth, cardHeight, radius); ctx.fillStyle = palette.card; ctx.fill(); ctx.restore();
     ctx.save(); roundedRect(ctx, x, y, cardWidth, cardHeight, radius); ctx.clip();
-    if (windowChrome) {
-      ctx.fillStyle = "rgba(255,255,255,.025)"; ctx.fillRect(x, y, cardWidth, 70);
-      if (mode === "window") {
-        ["#ff5f57", "#febc2e", "#28c840"].forEach((color, index) => { ctx.beginPath(); ctx.arc(x + 34 + index * 25, y + 35, 7, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); });
-      } else {
-        ctx.fillStyle = palette.accent; ctx.font = "600 16px 'Geist Mono Variable', ui-monospace, monospace"; ctx.fillText(">_", x + 30, y + 41);
-      }
-      ctx.fillStyle = palette.muted; ctx.font = "500 15px 'Geist Mono Variable', ui-monospace, monospace";
-      ctx.textAlign = "center"; ctx.fillText(title, width / 2, y + 41); ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(255,255,255,.025)"; ctx.fillRect(x, y, cardWidth, 70);
+    if (mode === "window") {
+      ["#ff5f57", "#febc2e", "#28c840"].forEach((color, index) => { ctx.beginPath(); ctx.arc(x + 34 + index * 25, y + 35, 7, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); });
+    } else {
+      ctx.fillStyle = palette.accent; ctx.font = "600 16px 'Geist Mono Variable', ui-monospace, monospace"; ctx.fillText(">_", x + 30, y + 41);
     }
+    ctx.fillStyle = palette.muted; ctx.font = "500 15px 'Geist Mono Variable', ui-monospace, monospace";
+    ctx.textAlign = "center"; ctx.fillText(title, width / 2, y + 41); ctx.textAlign = "left";
     const codeY = y + chromeHeight + 38;
     ctx.font = `430 ${fontSize}px 'Geist Mono Variable', ui-monospace, monospace`;
     highlightedLines.forEach((tokens, index) => {
@@ -127,7 +124,7 @@ export function App() {
     <main className="app-shell">
       <header className="topbar">
         <a className="brand" href="/" aria-label="Vignette home"><span className="brand-mark"><Braces size={18} strokeWidth={2.2} /></span><span>Vignette</span></a>
-        <div className="topbar-actions"><Button className="download-button" onClick={downloadPng}>{downloaded ? <Check /> : <Download />}{downloaded ? "Exported" : "Export PNG"}</Button></div>
+        <div className="topbar-actions"><Button className="download-button" onClick={downloadPng} aria-live="polite">{downloaded ? <Check /> : <Download />}{downloaded ? "Exported" : "Export PNG"}</Button></div>
       </header>
 
       <section className="workspace">
@@ -137,7 +134,7 @@ export function App() {
             <div className="preview-stage" style={{ background: `linear-gradient(135deg, ${palette.colors[0]}, ${palette.colors[1]})`, padding: `${padding}px` }}>
               <div className="grain" aria-hidden="true" />
               <div className="code-window" style={{ borderRadius: `${radius}px`, background: palette.card, color: palette.text }}>
-                {windowChrome && <div className="window-bar"><div className="window-side">{mode === "window" ? <span className="traffic"><i /><i /><i /></span> : <span className="terminal-glyph" style={{ color: palette.accent }}>&gt;_</span>}</div><input value={title} onChange={(event) => setTitle(event.target.value)} aria-label="Snippet title" /><span className="language-pill">{language}</span></div>}
+                <div className="window-bar"><div className="window-side">{mode === "window" ? <span className="traffic"><i /><i /><i /></span> : <span className="terminal-glyph" style={{ color: palette.accent }}>&gt;_</span>}</div><input value={title} onChange={(event) => setTitle(event.target.value)} aria-label="Snippet title" /><span className="language-pill">{language}</span></div>
                 <div className="editor-shell" style={{ fontSize: `${fontSize}px` }}>{lineNumbers && <pre className="line-numbers" style={{ color: palette.muted }}>{lines.map((_, i) => `${i + 1}\n`)}</pre>}<SyntaxEditor code={code} language={language} accent={palette.accent} onChange={setCode} /></div>
               </div>
             </div>
@@ -151,7 +148,7 @@ export function App() {
           <RangeControl label="Padding" value={padding} min={24} max={96} unit="px" onChange={setPadding} />
           <RangeControl label="Corner radius" value={radius} min={0} max={36} unit="px" onChange={setRadius} />
           <RangeControl label="Font size" value={fontSize} min={13} max={22} unit="px" onChange={setFontSize} />
-          <div className="switch-list"><label><span><b>Line numbers</b><small>Show a gutter beside the code</small></span><Switch checked={lineNumbers} onCheckedChange={setLineNumbers} /></label><label><span><b>Window chrome</b><small>Show the title bar and controls</small></span><Switch checked={windowChrome} onCheckedChange={setWindowChrome} /></label></div>
+          <div className="switch-list"><label><span><b>Line numbers</b><small>Show a gutter beside the code</small></span><Switch checked={lineNumbers} onCheckedChange={setLineNumbers} /></label></div>
         </aside>
       </section>
     </main>
