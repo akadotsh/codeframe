@@ -331,6 +331,13 @@ export function App() {
                 onPointerEnd={stopResize}
                 onKeyDown={resizeWithKeyboard}
               />
+              <output
+                className="frame-width-indicator"
+                data-visible={resizing}
+                aria-hidden={!resizing}
+              >
+                {frameMetrics.width}px
+              </output>
               <div className="grain" aria-hidden="true" />
               <div
                 className="code-window"
