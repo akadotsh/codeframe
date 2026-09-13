@@ -87,6 +87,7 @@ export function App() {
   const [fontSize, setFontSize] = useState(16);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("auto");
   const [lineNumbers, setLineNumbers] = useState(true);
+  const [titleBar, setTitleBar] = useState(true);
   const [title, setTitle] = useState("hello-world.ts");
   const [imageFormat, setImageFormat] = useState<ImageFormat>("png");
   const [saved, setSaved] = useState(false);
@@ -96,7 +97,7 @@ export function App() {
   const selectedAspectRatio = aspectRatios.find((option) => option.value === aspectRatio)!;
   const frameMetrics = useMemo(() => {
     const lineHeight = fontSize * 1.65;
-    const chromeHeight = 70;
+    const chromeHeight = titleBar ? 70 : 0;
     const naturalCardHeight = Math.max(360, lines.length * lineHeight + chromeHeight + 76);
     const naturalHeight = Math.ceil(naturalCardHeight + padding * 2);
     const ratio = selectedAspectRatio.ratio;
@@ -104,7 +105,7 @@ export function App() {
     const height = ratio ? Math.ceil(width / ratio) : naturalHeight;
 
     return { width, height, cardHeight: height - padding * 2, lineHeight, chromeHeight };
-  }, [fontSize, lines.length, padding, selectedAspectRatio.ratio]);
+  }, [fontSize, lines.length, padding, selectedAspectRatio.ratio, titleBar]);
 
   const chooseLanguage = (next: string) => {
     const previousSample = samples[language];
@@ -155,25 +156,27 @@ export function App() {
     ctx.save();
     roundedRect(ctx, x, y, cardWidth, cardHeight, radius);
     ctx.clip();
-    ctx.fillStyle = "rgba(255,255,255,.025)";
-    ctx.fillRect(x, y, cardWidth, 70);
-    if (mode === "window") {
-      ["#ff5f57", "#febc2e", "#28c840"].forEach((color, index) => {
-        ctx.beginPath();
-        ctx.arc(x + 34 + index * 25, y + 35, 7, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-      });
-    } else {
-      ctx.fillStyle = palette.accent;
-      ctx.font = "600 16px 'Geist Mono Variable', ui-monospace, monospace";
-      ctx.fillText(">_", x + 30, y + 41);
+    if (titleBar) {
+      ctx.fillStyle = "rgba(255,255,255,.025)";
+      ctx.fillRect(x, y, cardWidth, 70);
+      if (mode === "window") {
+        ["#ff5f57", "#febc2e", "#28c840"].forEach((color, index) => {
+          ctx.beginPath();
+          ctx.arc(x + 34 + index * 25, y + 35, 7, 0, Math.PI * 2);
+          ctx.fillStyle = color;
+          ctx.fill();
+        });
+      } else {
+        ctx.fillStyle = palette.accent;
+        ctx.font = "600 16px 'Geist Mono Variable', ui-monospace, monospace";
+        ctx.fillText(">_", x + 30, y + 41);
+      }
+      ctx.fillStyle = palette.muted;
+      ctx.font = "500 15px 'Geist Mono Variable', ui-monospace, monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(title, width / 2, y + 41);
+      ctx.textAlign = "left";
     }
-    ctx.fillStyle = palette.muted;
-    ctx.font = "500 15px 'Geist Mono Variable', ui-monospace, monospace";
-    ctx.textAlign = "center";
-    ctx.fillText(title, width / 2, y + 41);
-    ctx.textAlign = "left";
     const codeY = y + chromeHeight + 38;
     ctx.font = `430 ${fontSize}px 'Geist Mono Variable', ui-monospace, monospace`;
     highlightedLines.forEach((tokens, index) => {
@@ -255,26 +258,32 @@ export function App() {
                   height: selectedAspectRatio.ratio ? "100%" : undefined,
                 }}
               >
-                <div className="window-bar">
-                  <div className="window-side">
-                    {mode === "window" ? (
-                      <span className="traffic">
-                        <i />
-                        <i />
-                        <i />
-                      </span>
-                    ) : (
-                      <span className="terminal-glyph" style={{ color: palette.accent }}>
-                        &gt;_
-                      </span>
-                    )}
+                <div
+                  className={`window-bar-reveal${titleBar ? "" : " hidden"}`}
+                  aria-hidden={!titleBar}
+                >
+                  <div className="window-bar">
+                    <div className="window-side">
+                      {mode === "window" ? (
+                        <span className="traffic">
+                          <i />
+                          <i />
+                          <i />
+                        </span>
+                      ) : (
+                        <span className="terminal-glyph" style={{ color: palette.accent }}>
+                          &gt;_
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      value={title}
+                      onChange={(event) => setTitle(event.target.value)}
+                      aria-label="Snippet title"
+                      tabIndex={titleBar ? 0 : -1}
+                    />
+                    <span className="language-pill">{language}</span>
                   </div>
-                  <input
-                    value={title}
-                    onChange={(event) => setTitle(event.target.value)}
-                    aria-label="Snippet title"
-                  />
-                  <span className="language-pill">{language}</span>
                 </div>
                 <div className="editor-shell" style={{ fontSize: `${fontSize}px` }}>
                   {lineNumbers && (
@@ -400,6 +409,13 @@ export function App() {
                 <small>Show a gutter beside the code</small>
               </span>
               <Switch checked={lineNumbers} onCheckedChange={setLineNumbers} />
+            </label>
+            <label>
+              <span>
+                <b>Title bar</b>
+                <small>Show filename and window controls</small>
+              </span>
+              <Switch checked={titleBar} onCheckedChange={setTitleBar} />
             </label>
           </div>
         </aside>

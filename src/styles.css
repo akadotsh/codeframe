@@ -21,6 +21,7 @@
   --ring: #9187d5;
   --radius: 0.625rem;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   font-family: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
   background: var(--background);
   color: var(--foreground);
@@ -301,6 +302,22 @@ button {
   border-bottom: 1px solid rgba(255, 255, 255, 0.045);
   background: rgba(255, 255, 255, 0.015);
   padding: 0 23px;
+  transition:
+    opacity 160ms ease,
+    transform 220ms var(--ease-in-out);
+}
+.window-bar-reveal {
+  display: grid;
+  grid-template-rows: 64px;
+  overflow: hidden;
+  transition: grid-template-rows 220ms var(--ease-in-out);
+}
+.window-bar-reveal.hidden {
+  grid-template-rows: 0px;
+}
+.window-bar-reveal.hidden .window-bar {
+  opacity: 0;
+  transform: translateY(-8px);
 }
 .window-side {
   min-width: 90px;
@@ -750,6 +767,8 @@ button {
   .aspect-ratio-option,
   .save-button,
   .save-menu-trigger,
+  .window-bar,
+  .window-bar-reveal,
   .segmented button,
   .code-window,
   .preview-stage,
