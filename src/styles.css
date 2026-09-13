@@ -516,6 +516,46 @@ button {
     opacity 120ms var(--ease-out),
     transform 120ms var(--ease-out);
 }
+.aspect-ratio-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.aspect-ratio-option {
+  height: 54px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #77737f;
+  background: rgba(255, 255, 255, 0.025);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 560;
+  transition:
+    transform 140ms var(--ease-out),
+    border-color 140ms ease,
+    color 140ms ease,
+    background-color 140ms ease;
+}
+.aspect-ratio-option:active {
+  transform: scale(0.96);
+}
+.aspect-ratio-option.active {
+  border-color: rgba(196, 181, 253, 0.72);
+  color: #e8e3ff;
+  background: rgba(143, 131, 223, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(196, 181, 253, 0.08);
+}
+.aspect-ratio-shape {
+  width: 20px;
+  max-height: 16px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  opacity: 0.8;
+}
 .range-control [data-slot="slider-track"] {
   background: #2b2b33;
 }
@@ -572,6 +612,10 @@ button {
     filter: brightness(1.08);
   }
   .palette-expand:hover {
+    color: #aaa6b2;
+  }
+  .aspect-ratio-option:hover {
+    border-color: rgba(255, 255, 255, 0.2);
     color: #aaa6b2;
   }
   .download-button:hover {
@@ -653,6 +697,7 @@ button {
   .palette,
   .palette svg,
   .palette-expand svg,
+  .aspect-ratio-option,
   .download-button,
   .segmented button,
   .code-window,

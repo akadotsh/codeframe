@@ -44,7 +44,6 @@ const aspectRatios = [
   { value: "auto", label: "Auto", ratio: null },
   { value: "1:1", label: "Square · 1:1", ratio: 1 },
   { value: "4:3", label: "Classic · 4:3", ratio: 4 / 3 },
-  { value: "3:2", label: "Photo · 3:2", ratio: 3 / 2 },
   { value: "16:9", label: "Widescreen · 16:9", ratio: 16 / 9 },
 ] as const;
 
@@ -328,24 +327,27 @@ export function App() {
             </div>
           </div>
           <div className="setting-group">
-            <label className="setting-label" htmlFor="aspect-ratio-select">
-              Aspect ratio
-            </label>
-            <Select
-              value={aspectRatio}
-              onValueChange={(next) => setAspectRatio(next as AspectRatio)}
-            >
-              <SelectTrigger id="aspect-ratio-select" className="select-trigger">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {aspectRatios.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="setting-label">
+              <span>Aspect ratio</span>
+            </div>
+            <div className="aspect-ratio-grid">
+              {aspectRatios.map((option) => (
+                <button
+                  key={option.value}
+                  className={`aspect-ratio-option${aspectRatio === option.value ? " active" : ""}`}
+                  aria-label={option.label}
+                  aria-pressed={aspectRatio === option.value}
+                  onClick={() => setAspectRatio(option.value)}
+                >
+                  <span
+                    className="aspect-ratio-shape"
+                    style={{ aspectRatio: option.ratio ?? 1.45 }}
+                    aria-hidden="true"
+                  />
+                  <span>{option.value === "auto" ? "Auto" : option.value}</span>
+                </button>
+              ))}
+            </div>
           </div>
           <RangeControl
             label="Padding"
