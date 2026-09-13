@@ -107,7 +107,7 @@ export function App() {
     canvas.toBlob((blob) => {
       if (!blob) return;
       const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob); link.download = `${title.replace(/\.[^.]+$/, "") || "codeframe"}.png`; link.click(); URL.revokeObjectURL(link.href);
+      link.href = URL.createObjectURL(blob); link.download = `${title.replace(/\.[^.]+$/, "") || "vignette"}.png`; link.click(); URL.revokeObjectURL(link.href);
       setDownloaded(true); window.setTimeout(() => setDownloaded(false), 1800);
     }, "image/png");
   };
