@@ -40,6 +40,16 @@ const languageIds: Record<string, "typescript" | "javascript" | "python" | "css"
   };
 const highlightTheme = "github-dark-default";
 const loadHighlighter = () => import("./highlighter").then((module) => module.highlighterPromise);
+const aspectRatios = [
+  { value: "auto", label: "Auto", ratio: null },
+  { value: "1:1", label: "Square · 1:1", ratio: 1 },
+  { value: "4:3", label: "Classic · 4:3", ratio: 4 / 3 },
+  { value: "3:2", label: "Photo · 3:2", ratio: 3 / 2 },
+  { value: "16:9", label: "Widescreen · 16:9", ratio: 16 / 9 },
+] as const;
+
+type AspectRatio = (typeof aspectRatios)[number]["value"];
+type PreviewMode = "window" | "terminal";
 
 function roundedRect(
   ctx: CanvasRenderingContext2D,
@@ -58,16 +68,29 @@ export function App() {
   const [showAllPalettes, setShowAllPalettes] = useState(false);
   const [language, setLanguage] = useState("TypeScript");
   const [code, setCode] = useState(samples.TypeScript);
-  const [mode, setMode] = useState<"window" | "terminal">("window");
+  const [mode, setMode] = useState<PreviewMode>("window");
   const [padding, setPadding] = useState(64);
   const [radius, setRadius] = useState(22);
   const [fontSize, setFontSize] = useState(16);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("auto");
   const [lineNumbers, setLineNumbers] = useState(true);
   const [title, setTitle] = useState("hello-world.ts");
   const [downloaded, setDownloaded] = useState(false);
   const palette = palettes[paletteIndex];
   const visiblePalettes = showAllPalettes ? palettes : palettes.slice(0, 6);
   const lines = useMemo(() => code.split("\n"), [code]);
+  const selectedAspectRatio = aspectRatios.find((option) => option.value === aspectRatio)!;
+  const frameMetrics = useMemo(() => {
+    const lineHeight = fontSize * 1.65;
+    const chromeHeight = 70;
+    const naturalCardHeight = Math.max(360, lines.length * lineHeight + chromeHeight + 76);
+    const naturalHeight = Math.ceil(naturalCardHeight + padding * 2);
+    const ratio = selectedAspectRatio.ratio;
+    const width = ratio ? Math.max(1200, Math.ceil(naturalHeight * ratio)) : 1200;
+    const height = ratio ? Math.ceil(width / ratio) : naturalHeight;
+
+    return { width, height, cardHeight: height - padding * 2, lineHeight, chromeHeight };
+  }, [fontSize, lines.length, padding, selectedAspectRatio.ratio]);
 
   const chooseLanguage = (next: string) => {
     const previousSample = samples[language];
@@ -84,11 +107,7 @@ export function App() {
       theme: highlightTheme,
     }).tokens;
     const scale = 2;
-    const width = 1200;
-    const lineHeight = fontSize * 1.65;
-    const chromeHeight = 70;
-    const cardHeight = Math.max(360, lines.length * lineHeight + chromeHeight + 76);
-    const height = cardHeight + padding * 2;
+    const { width, height, cardHeight, lineHeight, chromeHeight } = frameMetrics;
     const canvas = document.createElement("canvas");
     canvas.width = width * scale;
     canvas.height = height * scale;
@@ -181,38 +200,25 @@ export function App() {
           <span>Vignette</span>
         </a>
         <div className="topbar-actions">
-          <Button className="download-button" onClick={downloadPng} aria-live="polite">
-            {downloaded ? <Check /> : <Download />}
-            {downloaded ? "Exported" : "Export PNG"}
-          </Button>
+          <ExportButton downloaded={downloaded} onClick={downloadPng} />
         </div>
       </header>
 
       <section className="workspace">
         <div className="canvas-area">
           <div className="canvas-toolbar" aria-label="Preview type">
-            <div className="segmented">
-              <button
-                className={mode === "window" ? "active" : ""}
-                onClick={() => setMode("window")}
-              >
-                <Monitor /> Window
-              </button>
-              <button
-                className={mode === "terminal" ? "active" : ""}
-                onClick={() => setMode("terminal")}
-              >
-                <Terminal /> Terminal
-              </button>
-            </div>
-            <span className="canvas-size">1200 × auto</span>
+            <PreviewModeSelector mode={mode} onChange={setMode} />
+            <span className="canvas-size">
+              {frameMetrics.width} × {frameMetrics.height}
+            </span>
           </div>
           <div className="preview-wrap">
             <div
               className="preview-stage"
               style={{
                 background: `linear-gradient(135deg, ${palette.colors[0]}, ${palette.colors[1]})`,
-                padding: `${padding}px`,
+                padding: `${selectedAspectRatio.ratio ? Math.round(padding * 0.72) : padding}px`,
+                aspectRatio: selectedAspectRatio.ratio ?? undefined,
               }}
             >
               <div className="grain" aria-hidden="true" />
@@ -222,6 +228,7 @@ export function App() {
                   borderRadius: `${radius}px`,
                   background: palette.card,
                   color: palette.text,
+                  height: selectedAspectRatio.ratio ? "100%" : undefined,
                 }}
               >
                 <div className="window-bar">
@@ -320,6 +327,26 @@ export function App() {
               ))}
             </div>
           </div>
+          <div className="setting-group">
+            <label className="setting-label" htmlFor="aspect-ratio-select">
+              Aspect ratio
+            </label>
+            <Select
+              value={aspectRatio}
+              onValueChange={(next) => setAspectRatio(next as AspectRatio)}
+            >
+              <SelectTrigger id="aspect-ratio-select" className="select-trigger">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {aspectRatios.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <RangeControl
             label="Padding"
             value={padding}
@@ -356,6 +383,34 @@ export function App() {
         </aside>
       </section>
     </main>
+  );
+}
+
+function ExportButton({ downloaded, onClick }: { downloaded: boolean; onClick: () => void }) {
+  return (
+    <Button className="download-button" onClick={onClick} aria-live="polite">
+      {downloaded ? <Check /> : <Download />}
+      {downloaded ? "Exported" : "Export PNG"}
+    </Button>
+  );
+}
+
+function PreviewModeSelector({
+  mode,
+  onChange,
+}: {
+  mode: PreviewMode;
+  onChange: (mode: PreviewMode) => void;
+}) {
+  return (
+    <div className="segmented">
+      <button className={mode === "window" ? "active" : ""} onClick={() => onChange("window")}>
+        <Monitor /> Window
+      </button>
+      <button className={mode === "terminal" ? "active" : ""} onClick={() => onChange("terminal")}>
+        <Terminal /> Terminal
+      </button>
+    </div>
   );
 }
 
