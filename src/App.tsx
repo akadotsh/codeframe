@@ -24,25 +24,12 @@ import {
   aspectRatios,
   clampFrameWidth,
   getFrameMetrics,
-  imageFormats,
   type AspectRatio,
   type ImageFormat,
   type PreviewMode,
 } from "./config/export";
-import { highlightTheme, loadHighlighter } from "./lib/highlighting";
+import { saveSnippetImage } from "./lib/save-snippet-image";
 import { palettes } from "./palettes";
-
-function roundedRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number,
-) {
-  ctx.beginPath();
-  ctx.roundRect(x, y, width, height, Math.min(radius, width / 2, height / 2));
-}
 
 export function App() {
   const [paletteIndex, setPaletteIndex] = useState(0);
@@ -137,93 +124,22 @@ export function App() {
   };
 
   const saveImage = async (formatValue: ImageFormat) => {
-    await document.fonts.ready;
-    const highlighter = await loadHighlighter();
-    const highlightedLines = highlighter.codeToTokens(code, {
-      lang: languageConfig[language].highlighter,
-      theme: highlightTheme,
-    }).tokens;
-    const scale = 2;
-    const { width, height, cardHeight, lineHeight, chromeHeight } = frameMetrics;
-    const canvas = document.createElement("canvas");
-    canvas.width = width * scale;
-    canvas.height = height * scale;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.scale(scale, scale);
-    const gradient = ctx.createLinearGradient(0, 0, width, height);
-    gradient.addColorStop(0, palette.colors[0]);
-    gradient.addColorStop(1, palette.colors[1]);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, width, height);
-    const x = padding;
-    const y = padding;
-    const cardWidth = width - padding * 2;
-    ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,.32)";
-    ctx.shadowBlur = 44;
-    ctx.shadowOffsetY = 22;
-    roundedRect(ctx, x, y, cardWidth, cardHeight, radius);
-    ctx.fillStyle = palette.card;
-    ctx.fill();
-    ctx.restore();
-    ctx.save();
-    roundedRect(ctx, x, y, cardWidth, cardHeight, radius);
-    ctx.clip();
-    if (titleBar) {
-      ctx.fillStyle = "rgba(255,255,255,.025)";
-      ctx.fillRect(x, y, cardWidth, 70);
-      if (mode === "window") {
-        ["#ff5f57", "#febc2e", "#28c840"].forEach((color, index) => {
-          ctx.beginPath();
-          ctx.arc(x + 34 + index * 25, y + 35, 7, 0, Math.PI * 2);
-          ctx.fillStyle = color;
-          ctx.fill();
-        });
-      } else {
-        ctx.fillStyle = palette.accent;
-        ctx.font = "600 16px 'Geist Mono Variable', ui-monospace, monospace";
-        ctx.fillText(">_", x + 30, y + 41);
-      }
-      ctx.fillStyle = palette.muted;
-      ctx.font = "500 15px 'Geist Mono Variable', ui-monospace, monospace";
-      ctx.textAlign = "center";
-      ctx.fillText(title, width / 2, y + 41);
-      ctx.textAlign = "left";
-    }
-    const codeY = y + chromeHeight + 38;
-    ctx.font = `430 ${fontSize}px 'Geist Mono Variable', ui-monospace, monospace`;
-    highlightedLines.forEach((tokens, index) => {
-      const baseline = codeY + index * lineHeight;
-      if (lineNumbers) {
-        ctx.fillStyle = palette.muted;
-        ctx.textAlign = "right";
-        ctx.fillText(String(index + 1), x + 62, baseline);
-        ctx.textAlign = "left";
-      }
-      let tokenX = x + (lineNumbers ? 94 : 46);
-      tokens.forEach((token) => {
-        ctx.fillStyle = token.color || palette.text;
-        ctx.fillText(token.content || " ", tokenX, baseline);
-        tokenX += ctx.measureText(token.content).width;
-      });
+    await saveSnippetImage({
+      code,
+      fontSize,
+      format: formatValue,
+      frameMetrics,
+      language,
+      lineNumbers,
+      mode,
+      padding,
+      palette,
+      radius,
+      title,
+      titleBar,
     });
-    ctx.restore();
-    const format = imageFormats.find((option) => option.value === formatValue)!;
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return;
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `${title.replace(/\.[^.]+$/, "") || "vignette"}.${format.extension}`;
-        link.click();
-        URL.revokeObjectURL(link.href);
-        setSaved(true);
-        window.setTimeout(() => setSaved(false), 1800);
-      },
-      format.mimeType,
-      format.quality,
-    );
+    setSaved(true);
+    window.setTimeout(() => setSaved(false), 1800);
   };
 
   return (
