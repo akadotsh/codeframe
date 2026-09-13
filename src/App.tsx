@@ -18,64 +18,22 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { languageConfig, languages, type Language } from "./config/editor";
+import {
+  aspectRatios,
+  clampFrameWidth,
+  getFrameMetrics,
+  imageFormats,
+  maxFrameWidth,
+  minFrameWidth,
+  type AspectRatio,
+  type ImageFormat,
+  type PreviewMode,
+} from "./config/export";
 import { palettes } from "./palettes";
 
-const samples: Record<string, string> = {
-  TypeScript: `const createFrame = (code: string) => {\n  return {\n    title: "hello-world.ts",\n    theme: "graphite",\n    ready: true,\n  };\n};\n\nconsole.log(createFrame("Ship it."));`,
-  JavaScript: `function greet(name) {\n  const message = \`Hello, \${name}!\`;\n  return message;\n}\n\nconsole.log(greet("world"));`,
-  Python: `def create_frame(code: str):\n    return {\n        "title": "hello.py",\n        "ready": True,\n    }\n\nprint(create_frame("Ship it."))`,
-  CSS: `.code-frame {\n  display: grid;\n  place-items: center;\n  padding: 4rem;\n  border-radius: 24px;\n}`,
-  Rust: `fn main() {\n    let status = "ready";\n    println!("Frame is {status}");\n}`,
-  Go: `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Frame is ready")\n}`,
-};
-
-const extensions: Record<string, string> = {
-  TypeScript: "ts",
-  JavaScript: "js",
-  Python: "py",
-  CSS: "css",
-  Rust: "rs",
-  Go: "go",
-};
-const languageIds: Record<string, "typescript" | "javascript" | "python" | "css" | "rust" | "go"> =
-  {
-    TypeScript: "typescript",
-    JavaScript: "javascript",
-    Python: "python",
-    CSS: "css",
-    Rust: "rust",
-    Go: "go",
-  };
 const highlightTheme = "github-dark-default";
 const loadHighlighter = () => import("./highlighter").then((module) => module.highlighterPromise);
-const aspectRatios = [
-  { value: "auto", label: "Auto", ratio: null },
-  { value: "1:1", label: "Square · 1:1", ratio: 1 },
-  { value: "4:3", label: "Classic · 4:3", ratio: 4 / 3 },
-  { value: "16:9", label: "Widescreen · 16:9", ratio: 16 / 9 },
-] as const;
-
-type AspectRatio = (typeof aspectRatios)[number]["value"];
-type PreviewMode = "window" | "terminal";
-type ImageFormat = "png" | "webp" | "jpeg";
-
-const imageFormats: Array<{
-  value: ImageFormat;
-  label: string;
-  mimeType: string;
-  extension: string;
-  quality?: number;
-}> = [
-  { value: "png", label: "PNG", mimeType: "image/png", extension: "png" },
-  { value: "webp", label: "WebP", mimeType: "image/webp", extension: "webp", quality: 0.92 },
-  { value: "jpeg", label: "JPEG", mimeType: "image/jpeg", extension: "jpg", quality: 0.92 },
-];
-const minFrameWidth = 720;
-const maxFrameWidth = 1600;
-
-function clampFrameWidth(width: number) {
-  return Math.min(maxFrameWidth, Math.max(minFrameWidth, Math.round(width / 20) * 20));
-}
 
 function roundedRect(
   ctx: CanvasRenderingContext2D,
@@ -92,8 +50,8 @@ function roundedRect(
 export function App() {
   const [paletteIndex, setPaletteIndex] = useState(0);
   const [showAllPalettes, setShowAllPalettes] = useState(false);
-  const [language, setLanguage] = useState("TypeScript");
-  const [code, setCode] = useState(samples.TypeScript);
+  const [language, setLanguage] = useState<Language>("TypeScript");
+  const [code, setCode] = useState<string>(languageConfig.TypeScript.sample);
   const [mode, setMode] = useState<PreviewMode>("window");
   const [padding, setPadding] = useState(64);
   const [radius, setRadius] = useState(22);
@@ -119,17 +77,18 @@ export function App() {
   const visiblePalettes = showAllPalettes ? palettes : palettes.slice(0, 6);
   const lines = useMemo(() => code.split("\n"), [code]);
   const selectedAspectRatio = aspectRatios.find((option) => option.value === aspectRatio)!;
-  const frameMetrics = useMemo(() => {
-    const lineHeight = fontSize * 1.65;
-    const chromeHeight = titleBar ? 70 : 0;
-    const naturalCardHeight = Math.max(360, lines.length * lineHeight + chromeHeight + 76);
-    const naturalHeight = Math.ceil(naturalCardHeight + padding * 2);
-    const ratio = selectedAspectRatio.ratio;
-    const width = ratio ? Math.max(frameWidth, Math.ceil(naturalHeight * ratio)) : frameWidth;
-    const height = ratio ? Math.ceil(width / ratio) : naturalHeight;
-
-    return { width, height, cardHeight: height - padding * 2, lineHeight, chromeHeight };
-  }, [fontSize, frameWidth, lines.length, padding, selectedAspectRatio.ratio, titleBar]);
+  const frameMetrics = useMemo(
+    () =>
+      getFrameMetrics({
+        fontSize,
+        frameWidth,
+        lineCount: lines.length,
+        padding,
+        ratio: selectedAspectRatio.ratio,
+        titleBar,
+      }),
+    [fontSize, frameWidth, lines.length, padding, selectedAspectRatio.ratio, titleBar],
+  );
 
   const startResize = (event: ReactPointerEvent<HTMLButtonElement>, direction: 1 | -1) => {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -173,17 +132,18 @@ export function App() {
   };
 
   const chooseLanguage = (next: string) => {
-    const previousSample = samples[language];
-    setLanguage(next);
-    setTitle(`hello-world.${extensions[next]}`);
-    if (code === previousSample) setCode(samples[next]);
+    const nextLanguage = next as Language;
+    const previousSample = languageConfig[language].sample;
+    setLanguage(nextLanguage);
+    setTitle(`hello-world.${languageConfig[nextLanguage].extension}`);
+    if (code === previousSample) setCode(languageConfig[nextLanguage].sample);
   };
 
   const saveImage = async (formatValue: ImageFormat) => {
     await document.fonts.ready;
     const highlighter = await loadHighlighter();
     const highlightedLines = highlighter.codeToTokens(code, {
-      lang: languageIds[language],
+      lang: languageConfig[language].highlighter,
       theme: highlightTheme,
     }).tokens;
     const scale = 2;
@@ -401,7 +361,7 @@ export function App() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.keys(samples).map((item) => (
+                {languages.map((item) => (
                   <SelectItem key={item} value={item}>
                     {item}
                   </SelectItem>
@@ -662,7 +622,7 @@ function SyntaxEditor({
     const timeout = window.setTimeout(async () => {
       const highlighter = await loadHighlighter();
       const html = highlighter.codeToHtml(code || " ", {
-        lang: languageIds[language],
+        lang: languageConfig[language as Language].highlighter,
         theme: highlightTheme,
       });
       if (current) setHighlighted(html);
