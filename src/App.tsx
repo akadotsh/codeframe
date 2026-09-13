@@ -5,21 +5,11 @@ import {
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Braces, Check, ChevronDown } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { FrameResizeHandle } from "./components/frame-resize-handle";
-import { PreviewModeSelector } from "./components/preview-mode-selector";
-import { RangeControl } from "./components/range-control";
+import { Braces } from "lucide-react";
+import { AppearancePanel } from "./components/appearance-panel";
+import { EditorPreview } from "./components/editor-preview";
 import { SaveControl } from "./components/save-control";
-import { SyntaxEditor } from "./components/syntax-editor";
-import { languageConfig, languages, type Language } from "./config/editor";
+import { languageConfig, type Language } from "./config/editor";
 import {
   aspectRatios,
   clampFrameWidth,
@@ -33,7 +23,6 @@ import { palettes } from "./palettes";
 
 export function App() {
   const [paletteIndex, setPaletteIndex] = useState(0);
-  const [showAllPalettes, setShowAllPalettes] = useState(false);
   const [language, setLanguage] = useState<Language>("TypeScript");
   const [code, setCode] = useState<string>(languageConfig.TypeScript.sample);
   const [mode, setMode] = useState<PreviewMode>("window");
@@ -58,7 +47,6 @@ export function App() {
     direction: 1,
   });
   const palette = palettes[paletteIndex];
-  const visiblePalettes = showAllPalettes ? palettes : palettes.slice(0, 6);
   const lines = useMemo(() => code.split("\n"), [code]);
   const selectedAspectRatio = aspectRatios.find((option) => option.value === aspectRatio)!;
   const frameMetrics = useMemo(
@@ -162,218 +150,47 @@ export function App() {
       </header>
 
       <section className="workspace">
-        <div className="canvas-area">
-          <div className="canvas-toolbar" aria-label="Preview type">
-            <PreviewModeSelector mode={mode} onChange={setMode} />
-            <span className="canvas-size">
-              {frameMetrics.width} × {frameMetrics.height}
-            </span>
-          </div>
-          <div className="preview-wrap">
-            <div
-              ref={previewStageRef}
-              className="preview-stage"
-              style={{
-                width: `${Math.round(frameMetrics.width * 0.72)}px`,
-                background: `linear-gradient(135deg, ${palette.colors[0]}, ${palette.colors[1]})`,
-                padding: `${selectedAspectRatio.ratio ? Math.round(padding * 0.72) : padding}px`,
-                aspectRatio: selectedAspectRatio.ratio ?? undefined,
-              }}
-            >
-              <FrameResizeHandle
-                side="left"
-                width={frameMetrics.width}
-                onPointerDown={(event) => startResize(event, -1)}
-                onPointerMove={resizeFrame}
-                onPointerEnd={stopResize}
-                onKeyDown={resizeWithKeyboard}
-              />
-              <FrameResizeHandle
-                side="right"
-                width={frameMetrics.width}
-                onPointerDown={(event) => startResize(event, 1)}
-                onPointerMove={resizeFrame}
-                onPointerEnd={stopResize}
-                onKeyDown={resizeWithKeyboard}
-              />
-              <output
-                className="frame-width-indicator"
-                data-visible={resizing}
-                aria-hidden={!resizing}
-              >
-                {frameMetrics.width}px
-              </output>
-              <div className="grain" aria-hidden="true" />
-              <div
-                className="code-window"
-                style={{
-                  borderRadius: `${radius}px`,
-                  background: palette.card,
-                  color: palette.text,
-                  height: selectedAspectRatio.ratio ? "100%" : undefined,
-                }}
-              >
-                <div
-                  className={`window-bar-reveal${titleBar ? "" : " hidden"}`}
-                  aria-hidden={!titleBar}
-                >
-                  <div className="window-bar">
-                    <div className="window-side">
-                      {mode === "window" ? (
-                        <span className="traffic">
-                          <i />
-                          <i />
-                          <i />
-                        </span>
-                      ) : (
-                        <span className="terminal-glyph" style={{ color: palette.accent }}>
-                          &gt;_
-                        </span>
-                      )}
-                    </div>
-                    <input
-                      value={title}
-                      onChange={(event) => setTitle(event.target.value)}
-                      aria-label="Snippet title"
-                      tabIndex={titleBar ? 0 : -1}
-                    />
-                    <span className="language-pill">{language}</span>
-                  </div>
-                </div>
-                <div className="editor-shell" style={{ fontSize: `${fontSize}px` }}>
-                  {lineNumbers && (
-                    <pre className="line-numbers" style={{ color: palette.muted }}>
-                      {lines.map((_, i) => `${i + 1}\n`)}
-                    </pre>
-                  )}
-                  <SyntaxEditor
-                    code={code}
-                    language={language}
-                    accent={palette.accent}
-                    onChange={setCode}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <aside className="settings-panel">
-          <div className="settings-heading">
-            <div>
-              <h1>Appearance</h1>
-              <p>Adjust the exported image.</p>
-            </div>
-          </div>
-          <div className="setting-group">
-            <label className="setting-label" htmlFor="language-select">
-              Language
-            </label>
-            <Select value={language} onValueChange={chooseLanguage}>
-              <SelectTrigger id="language-select" className="select-trigger">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {languages.map((item) => (
-                  <SelectItem key={item} value={item}>
-                    {item}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="setting-group">
-            <div className="setting-label">
-              <span>Color palette</span>
-              <button
-                className="palette-expand"
-                aria-label={
-                  showAllPalettes ? "Show fewer color palettes" : "Show all color palettes"
-                }
-                aria-expanded={showAllPalettes}
-                aria-controls="palette-grid"
-                onClick={() => setShowAllPalettes((current) => !current)}
-              >
-                <span>{palette.name}</span>
-                <ChevronDown />
-              </button>
-            </div>
-            <div className="palette-grid" id="palette-grid">
-              {visiblePalettes.map((item, index) => (
-                <button
-                  key={item.name}
-                  aria-label={`Use ${item.name} palette`}
-                  aria-pressed={paletteIndex === index}
-                  className={`${paletteIndex === index ? "palette active" : "palette"}${index >= 6 ? " extra" : ""}`}
-                  style={{
-                    background: `linear-gradient(135deg, ${item.colors[0]}, ${item.colors[1]})`,
-                  }}
-                  onClick={() => setPaletteIndex(index)}
-                >
-                  {paletteIndex === index && <Check />}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="setting-group">
-            <div className="setting-label">
-              <span>Aspect ratio</span>
-            </div>
-            <div className="aspect-ratio-grid">
-              {aspectRatios.map((option) => (
-                <button
-                  key={option.value}
-                  className={`aspect-ratio-option${aspectRatio === option.value ? " active" : ""}`}
-                  aria-label={option.label}
-                  aria-pressed={aspectRatio === option.value}
-                  onClick={() => setAspectRatio(option.value)}
-                >
-                  <span>{option.value === "auto" ? "Auto" : option.value}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-          <RangeControl
-            label="Padding"
-            value={padding}
-            min={24}
-            max={96}
-            unit="px"
-            onChange={setPadding}
-          />
-          <RangeControl
-            label="Corner radius"
-            value={radius}
-            min={0}
-            max={36}
-            unit="px"
-            onChange={setRadius}
-          />
-          <RangeControl
-            label="Font size"
-            value={fontSize}
-            min={13}
-            max={22}
-            unit="px"
-            onChange={setFontSize}
-          />
-          <div className="switch-list">
-            <label>
-              <span>
-                <b>Line numbers</b>
-                <small>Show a gutter beside the code</small>
-              </span>
-              <Switch checked={lineNumbers} onCheckedChange={setLineNumbers} />
-            </label>
-            <label>
-              <span>
-                <b>Title bar</b>
-                <small>Show filename and window controls</small>
-              </span>
-              <Switch checked={titleBar} onCheckedChange={setTitleBar} />
-            </label>
-          </div>
-        </aside>
+        <EditorPreview
+          aspectRatio={selectedAspectRatio.ratio}
+          code={code}
+          fontSize={fontSize}
+          frameMetrics={frameMetrics}
+          language={language}
+          lineNumbers={lineNumbers}
+          mode={mode}
+          padding={padding}
+          palette={palette}
+          previewStageRef={previewStageRef}
+          radius={radius}
+          resizing={resizing}
+          title={title}
+          titleBar={titleBar}
+          onCodeChange={setCode}
+          onModeChange={setMode}
+          onResizeEnd={stopResize}
+          onResizeKeyDown={resizeWithKeyboard}
+          onResizeMove={resizeFrame}
+          onResizeStart={startResize}
+          onTitleChange={setTitle}
+        />
+        <AppearancePanel
+          aspectRatio={aspectRatio}
+          fontSize={fontSize}
+          language={language}
+          lineNumbers={lineNumbers}
+          padding={padding}
+          paletteIndex={paletteIndex}
+          radius={radius}
+          titleBar={titleBar}
+          onAspectRatioChange={setAspectRatio}
+          onFontSizeChange={setFontSize}
+          onLanguageChange={chooseLanguage}
+          onLineNumbersChange={setLineNumbers}
+          onPaddingChange={setPadding}
+          onPaletteChange={setPaletteIndex}
+          onRadiusChange={setRadius}
+          onTitleBarChange={setTitleBar}
+        />
       </section>
     </main>
   );
