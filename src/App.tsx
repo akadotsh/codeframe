@@ -1,14 +1,11 @@
 import {
-  useEffect,
   useMemo,
   useRef,
   useState,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Braces, Check, ChevronDown, Monitor, Terminal } from "lucide-react";
-import { DropdownMenu } from "radix-ui";
-import { Button } from "@/components/ui/button";
+import { Braces, Check, ChevronDown } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -16,24 +13,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { FrameResizeHandle } from "./components/frame-resize-handle";
+import { PreviewModeSelector } from "./components/preview-mode-selector";
+import { RangeControl } from "./components/range-control";
+import { SaveControl } from "./components/save-control";
+import { SyntaxEditor } from "./components/syntax-editor";
 import { languageConfig, languages, type Language } from "./config/editor";
 import {
   aspectRatios,
   clampFrameWidth,
   getFrameMetrics,
   imageFormats,
-  maxFrameWidth,
-  minFrameWidth,
   type AspectRatio,
   type ImageFormat,
   type PreviewMode,
 } from "./config/export";
+import { highlightTheme, loadHighlighter } from "./lib/highlighting";
 import { palettes } from "./palettes";
-
-const highlightTheme = "github-dark-default";
-const loadHighlighter = () => import("./highlighter").then((module) => module.highlighterPromise);
 
 function roundedRect(
   ctx: CanvasRenderingContext2D,
@@ -463,191 +460,5 @@ export function App() {
         </aside>
       </section>
     </main>
-  );
-}
-
-function FrameResizeHandle({
-  side,
-  width,
-  onPointerDown,
-  onPointerMove,
-  onPointerEnd,
-  onKeyDown,
-}: {
-  side: "left" | "right";
-  width: number;
-  onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void;
-  onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) => void;
-  onPointerEnd: () => void;
-  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
-}) {
-  return (
-    <button
-      className={`frame-resize-handle ${side}`}
-      aria-label={`Resize frame from ${side} edge`}
-      aria-valuemin={minFrameWidth}
-      aria-valuemax={maxFrameWidth}
-      aria-valuenow={width}
-      role="separator"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerEnd}
-      onPointerCancel={onPointerEnd}
-      onKeyDown={onKeyDown}
-    />
-  );
-}
-
-function SaveControl({
-  format,
-  saved,
-  onFormatChange,
-  onSave,
-}: {
-  format: ImageFormat;
-  saved: boolean;
-  onFormatChange: (format: ImageFormat) => void;
-  onSave: (format: ImageFormat) => void;
-}) {
-  const selectedFormat = imageFormats.find((option) => option.value === format)!;
-
-  return (
-    <div className="save-control">
-      <Button className="save-button" onClick={() => onSave(format)} aria-live="polite">
-        {saved ? "Saved" : `Save ${selectedFormat.label}`}
-      </Button>
-      <DropdownMenu.Root>
-        <DropdownMenu.Trigger asChild>
-          <button className="save-menu-trigger" aria-label="Choose image format">
-            <ChevronDown />
-          </button>
-        </DropdownMenu.Trigger>
-        <DropdownMenu.Portal>
-          <DropdownMenu.Content className="save-menu-content" align="end" sideOffset={6}>
-            <DropdownMenu.RadioGroup
-              value={format}
-              onValueChange={(next) => onFormatChange(next as ImageFormat)}
-            >
-              {imageFormats.map((option) => (
-                <DropdownMenu.RadioItem
-                  className="save-menu-item"
-                  key={option.value}
-                  value={option.value}
-                >
-                  <span>{option.label}</span>
-                  <small>.{option.extension}</small>
-                  <DropdownMenu.ItemIndicator>
-                    <Check />
-                  </DropdownMenu.ItemIndicator>
-                </DropdownMenu.RadioItem>
-              ))}
-            </DropdownMenu.RadioGroup>
-          </DropdownMenu.Content>
-        </DropdownMenu.Portal>
-      </DropdownMenu.Root>
-    </div>
-  );
-}
-
-function PreviewModeSelector({
-  mode,
-  onChange,
-}: {
-  mode: PreviewMode;
-  onChange: (mode: PreviewMode) => void;
-}) {
-  return (
-    <div className="segmented">
-      <button className={mode === "window" ? "active" : ""} onClick={() => onChange("window")}>
-        <Monitor /> Window
-      </button>
-      <button className={mode === "terminal" ? "active" : ""} onClick={() => onChange("terminal")}>
-        <Terminal /> Terminal
-      </button>
-    </div>
-  );
-}
-
-function RangeControl({
-  label,
-  value,
-  min,
-  max,
-  unit,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  unit: string;
-  onChange: (value: number) => void;
-}) {
-  return (
-    <div className="setting-group range-control">
-      <div className="setting-label">
-        <span>{label}</span>
-        <output>
-          {value}
-          {unit}
-        </output>
-      </div>
-      <Slider
-        value={[value]}
-        min={min}
-        max={max}
-        step={1}
-        onValueChange={(next) => onChange(next[0])}
-        aria-label={label}
-      />
-    </div>
-  );
-}
-
-function SyntaxEditor({
-  code,
-  language,
-  accent,
-  onChange,
-}: {
-  code: string;
-  language: string;
-  accent: string;
-  onChange: (code: string) => void;
-}) {
-  const [highlighted, setHighlighted] = useState("");
-
-  useEffect(() => {
-    let current = true;
-    const timeout = window.setTimeout(async () => {
-      const highlighter = await loadHighlighter();
-      const html = highlighter.codeToHtml(code || " ", {
-        lang: languageConfig[language as Language].highlighter,
-        theme: highlightTheme,
-      });
-      if (current) setHighlighted(html);
-    }, 40);
-
-    return () => {
-      current = false;
-      window.clearTimeout(timeout);
-    };
-  }, [code, language]);
-
-  return (
-    <div className="syntax-editor">
-      <div
-        className="highlight-layer"
-        aria-hidden="true"
-        dangerouslySetInnerHTML={{ __html: highlighted }}
-      />
-      <textarea
-        aria-label="Code snippet"
-        value={code}
-        onChange={(event) => onChange(event.target.value)}
-        spellCheck={false}
-        style={{ caretColor: accent }}
-      />
-    </div>
   );
 }
