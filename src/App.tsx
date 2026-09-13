@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { Braces, Check, ChevronDown, Monitor, Terminal } from "lucide-react";
 import { DropdownMenu } from "radix-ui";
 import { Button } from "@/components/ui/button";
@@ -63,6 +70,12 @@ const imageFormats: Array<{
   { value: "webp", label: "WebP", mimeType: "image/webp", extension: "webp", quality: 0.92 },
   { value: "jpeg", label: "JPEG", mimeType: "image/jpeg", extension: "jpg", quality: 0.92 },
 ];
+const minFrameWidth = 720;
+const maxFrameWidth = 1600;
+
+function clampFrameWidth(width: number) {
+  return Math.min(maxFrameWidth, Math.max(minFrameWidth, Math.round(width / 20) * 20));
+}
 
 function roundedRect(
   ctx: CanvasRenderingContext2D,
@@ -85,12 +98,23 @@ export function App() {
   const [padding, setPadding] = useState(64);
   const [radius, setRadius] = useState(22);
   const [fontSize, setFontSize] = useState(16);
+  const [frameWidth, setFrameWidth] = useState(1200);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>("auto");
   const [lineNumbers, setLineNumbers] = useState(true);
   const [titleBar, setTitleBar] = useState(true);
   const [title, setTitle] = useState("hello-world.ts");
   const [imageFormat, setImageFormat] = useState<ImageFormat>("png");
   const [saved, setSaved] = useState(false);
+  const [resizing, setResizing] = useState(false);
+  const previewStageRef = useRef<HTMLDivElement>(null);
+  const resizeState = useRef({
+    active: false,
+    pointerId: -1,
+    startX: 0,
+    startWidth: 1200,
+    pixelsToExport: 1,
+    direction: 1,
+  });
   const palette = palettes[paletteIndex];
   const visiblePalettes = showAllPalettes ? palettes : palettes.slice(0, 6);
   const lines = useMemo(() => code.split("\n"), [code]);
@@ -101,11 +125,52 @@ export function App() {
     const naturalCardHeight = Math.max(360, lines.length * lineHeight + chromeHeight + 76);
     const naturalHeight = Math.ceil(naturalCardHeight + padding * 2);
     const ratio = selectedAspectRatio.ratio;
-    const width = ratio ? Math.max(1200, Math.ceil(naturalHeight * ratio)) : 1200;
+    const width = ratio ? Math.max(frameWidth, Math.ceil(naturalHeight * ratio)) : frameWidth;
     const height = ratio ? Math.ceil(width / ratio) : naturalHeight;
 
     return { width, height, cardHeight: height - padding * 2, lineHeight, chromeHeight };
-  }, [fontSize, lines.length, padding, selectedAspectRatio.ratio, titleBar]);
+  }, [fontSize, frameWidth, lines.length, padding, selectedAspectRatio.ratio, titleBar]);
+
+  const startResize = (event: ReactPointerEvent<HTMLButtonElement>, direction: 1 | -1) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const previewWidth = previewStageRef.current?.getBoundingClientRect().width ?? frameWidth;
+    resizeState.current = {
+      active: true,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startWidth: frameWidth,
+      pixelsToExport: frameWidth / previewWidth,
+      direction,
+    };
+    setResizing(true);
+  };
+
+  const resizeFrame = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    if (
+      !resizeState.current.active ||
+      resizeState.current.pointerId !== event.pointerId ||
+      event.buttons !== 1
+    )
+      return;
+    const { startX, startWidth, pixelsToExport, direction } = resizeState.current;
+    setFrameWidth(
+      clampFrameWidth(startWidth + (event.clientX - startX) * pixelsToExport * direction),
+    );
+  };
+
+  const stopResize = () => {
+    resizeState.current.active = false;
+    setResizing(false);
+  };
+
+  const resizeWithKeyboard = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const step = event.shiftKey ? 100 : 20;
+    setFrameWidth((current) =>
+      clampFrameWidth(current + (event.key === "ArrowRight" ? step : -step)),
+    );
+  };
 
   const chooseLanguage = (next: string) => {
     const previousSample = samples[language];
@@ -213,7 +278,7 @@ export function App() {
   };
 
   return (
-    <main className="app-shell">
+    <main className="app-shell" data-resizing={resizing}>
       <header className="topbar">
         <a className="brand" href="/" aria-label="Vignette home">
           <span className="brand-mark">
@@ -241,13 +306,31 @@ export function App() {
           </div>
           <div className="preview-wrap">
             <div
+              ref={previewStageRef}
               className="preview-stage"
               style={{
+                width: `${Math.round(frameMetrics.width * 0.72)}px`,
                 background: `linear-gradient(135deg, ${palette.colors[0]}, ${palette.colors[1]})`,
                 padding: `${selectedAspectRatio.ratio ? Math.round(padding * 0.72) : padding}px`,
                 aspectRatio: selectedAspectRatio.ratio ?? undefined,
               }}
             >
+              <FrameResizeHandle
+                side="left"
+                width={frameMetrics.width}
+                onPointerDown={(event) => startResize(event, -1)}
+                onPointerMove={resizeFrame}
+                onPointerEnd={stopResize}
+                onKeyDown={resizeWithKeyboard}
+              />
+              <FrameResizeHandle
+                side="right"
+                width={frameMetrics.width}
+                onPointerDown={(event) => startResize(event, 1)}
+                onPointerMove={resizeFrame}
+                onPointerEnd={stopResize}
+                onKeyDown={resizeWithKeyboard}
+              />
               <div className="grain" aria-hidden="true" />
               <div
                 className="code-window"
@@ -421,6 +504,38 @@ export function App() {
         </aside>
       </section>
     </main>
+  );
+}
+
+function FrameResizeHandle({
+  side,
+  width,
+  onPointerDown,
+  onPointerMove,
+  onPointerEnd,
+  onKeyDown,
+}: {
+  side: "left" | "right";
+  width: number;
+  onPointerDown: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onPointerMove: (event: ReactPointerEvent<HTMLButtonElement>) => void;
+  onPointerEnd: () => void;
+  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
+}) {
+  return (
+    <button
+      className={`frame-resize-handle ${side}`}
+      aria-label={`Resize frame from ${side} edge`}
+      aria-valuemin={minFrameWidth}
+      aria-valuemax={maxFrameWidth}
+      aria-valuenow={width}
+      role="separator"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerEnd}
+      onPointerCancel={onPointerEnd}
+      onKeyDown={onKeyDown}
+    />
   );
 }
 
