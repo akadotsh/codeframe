@@ -1,4 +1,4 @@
-# Codeframe MVP
+# Vignette MVP
 
 ## Goals
 

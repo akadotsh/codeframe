@@ -1,4 +1,4 @@
-# Codeframe
+# Vignette
 
 A focused TanStack Router app for turning code snippets into polished PNG images.
 

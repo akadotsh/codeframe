@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Braces, Check, ChevronDown, Download, Monitor, Terminal, WandSparkles } from "lucide-react";
+import { Braces, Check, Download, Monitor, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
@@ -8,16 +8,16 @@ import { Switch } from "@/components/ui/switch";
 type Palette = { name: string; colors: [string, string]; card: string; text: string; muted: string; accent: string };
 
 const palettes: Palette[] = [
-  { name: "Orchid", colors: ["#9146ff", "#ff7a59"], card: "#121018", text: "#f7f2ff", muted: "#817b8d", accent: "#b8a4ff" },
-  { name: "Lagoon", colors: ["#0b84f3", "#17c9a2"], card: "#07141d", text: "#e7f8ff", muted: "#6f8794", accent: "#65e6c4" },
-  { name: "Ember", colors: ["#ff4d33", "#ffbd2e"], card: "#17100e", text: "#fff5ec", muted: "#8e756b", accent: "#ffd16b" },
-  { name: "Ultraviolet", colors: ["#5a38f0", "#d448ed"], card: "#100d1d", text: "#f4f0ff", muted: "#77708b", accent: "#a899ff" },
-  { name: "Mono", colors: ["#35353d", "#85858e"], card: "#0e0e10", text: "#f4f4f5", muted: "#74747d", accent: "#ffffff" },
-  { name: "Sakura", colors: ["#f057a6", "#fa8e62"], card: "#1c1019", text: "#fff2fa", muted: "#977487", accent: "#ffacd8" },
+  { name: "Graphite", colors: ["#282a3a", "#5b526e"], card: "#111116", text: "#f1eff5", muted: "#74717e", accent: "#a79af2" },
+  { name: "Tide", colors: ["#123f4c", "#55736f"], card: "#0c1519", text: "#e7f1f0", muted: "#718484", accent: "#8ec8bd" },
+  { name: "Clay", colors: ["#5f342f", "#98705d"], card: "#17110f", text: "#f5ece8", muted: "#88736b", accent: "#d8a88f" },
+  { name: "Ink", colors: ["#202c50", "#5c4c7a"], card: "#0d101b", text: "#eff1fa", muted: "#6f7488", accent: "#9daae2" },
+  { name: "Mono", colors: ["#292a2f", "#606168"], card: "#101012", text: "#f0f0f1", muted: "#77787e", accent: "#c3c3c7" },
+  { name: "Rosewood", colors: ["#4c2c3b", "#885865"], card: "#171013", text: "#f6ecef", muted: "#8b727b", accent: "#d7a2b5" },
 ];
 
 const samples: Record<string, string> = {
-  TypeScript: `const createFrame = (code: string) => {\n  return {\n    title: "hello-world.ts",\n    theme: "orchid",\n    ready: true,\n  };\n};\n\nconsole.log(createFrame("Ship it."));`,
+  TypeScript: `const createFrame = (code: string) => {\n  return {\n    title: "hello-world.ts",\n    theme: "graphite",\n    ready: true,\n  };\n};\n\nconsole.log(createFrame("Ship it."));`,
   JavaScript: `function greet(name) {\n  const message = \`Hello, \${name}!\`;\n  return message;\n}\n\nconsole.log(greet("world"));`,
   Python: `def create_frame(code: str):\n    return {\n        "title": "hello.py",\n        "ready": True,\n    }\n\nprint(create_frame("Ship it."))`,
   CSS: `.code-frame {\n  display: grid;\n  place-items: center;\n  padding: 4rem;\n  border-radius: 24px;\n}`,
@@ -54,7 +54,8 @@ export function App() {
     if (code === previousSample) setCode(samples[next]);
   };
 
-  const downloadPng = () => {
+  const downloadPng = async () => {
+    await document.fonts.ready;
     const scale = 2;
     const width = 1200;
     const lineHeight = fontSize * 1.65;
@@ -88,13 +89,13 @@ export function App() {
       if (mode === "window") {
         ["#ff5f57", "#febc2e", "#28c840"].forEach((color, index) => { ctx.beginPath(); ctx.arc(x + 34 + index * 25, y + 35, 7, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); });
       } else {
-        ctx.fillStyle = palette.accent; ctx.font = "600 16px ui-monospace, SFMono-Regular, Menlo, monospace"; ctx.fillText(">_", x + 30, y + 41);
+        ctx.fillStyle = palette.accent; ctx.font = "600 16px 'Geist Mono Variable', ui-monospace, monospace"; ctx.fillText(">_", x + 30, y + 41);
       }
-      ctx.fillStyle = palette.muted; ctx.font = "500 15px ui-monospace, SFMono-Regular, Menlo, monospace";
+      ctx.fillStyle = palette.muted; ctx.font = "500 15px 'Geist Mono Variable', ui-monospace, monospace";
       ctx.textAlign = "center"; ctx.fillText(title, width / 2, y + 41); ctx.textAlign = "left";
     }
     const codeY = y + chromeHeight + 38;
-    ctx.font = `${fontSize}px ui-monospace, SFMono-Regular, Menlo, Monaco, monospace`;
+    ctx.font = `430 ${fontSize}px 'Geist Mono Variable', ui-monospace, monospace`;
     lines.forEach((line, index) => {
       const baseline = codeY + index * lineHeight;
       if (lineNumbers) { ctx.fillStyle = palette.muted; ctx.textAlign = "right"; ctx.fillText(String(index + 1), x + 62, baseline); ctx.textAlign = "left"; }
@@ -112,8 +113,8 @@ export function App() {
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="/" aria-label="Codeframe home"><span className="brand-mark"><Braces size={18} strokeWidth={2.4} /></span><span>codeframe</span><span className="beta">BETA</span></a>
-        <div className="topbar-actions"><span className="privacy-note">Everything stays in your browser</span><Button className="download-button" onClick={downloadPng}>{downloaded ? <Check /> : <Download />}{downloaded ? "Downloaded" : "Download PNG"}</Button></div>
+        <a className="brand" href="/" aria-label="Vignette home"><span className="brand-mark"><Braces size={18} strokeWidth={2.2} /></span><span>Vignette</span></a>
+        <div className="topbar-actions"><Button className="download-button" onClick={downloadPng}>{downloaded ? <Check /> : <Download />}{downloaded ? "Exported" : "Export PNG"}</Button></div>
       </header>
 
       <section className="workspace">
@@ -128,11 +129,10 @@ export function App() {
               </div>
             </div>
           </div>
-          <p className="edit-hint"><WandSparkles /> Click the title or code to edit your snippet</p>
         </div>
 
         <aside className="settings-panel">
-          <div className="settings-heading"><div><span>Style panel</span><h1>Make it yours</h1></div><button className="collapse-button" aria-label="Collapse style panel"><ChevronDown /></button></div>
+          <div className="settings-heading"><div><h1>Appearance</h1><p>Adjust the exported image.</p></div></div>
           <div className="setting-group"><label className="setting-label" htmlFor="language-select">Language</label><Select value={language} onValueChange={chooseLanguage}><SelectTrigger id="language-select" className="select-trigger"><SelectValue /></SelectTrigger><SelectContent>{Object.keys(samples).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></div>
           <div className="setting-group"><div className="setting-label"><span>Color palette</span><span>{palette.name}</span></div><div className="palette-grid">{palettes.map((item, index) => <button key={item.name} aria-label={`Use ${item.name} palette`} aria-pressed={paletteIndex === index} className={paletteIndex === index ? "palette active" : "palette"} style={{ background: `linear-gradient(135deg, ${item.colors[0]}, ${item.colors[1]})` }} onClick={() => setPaletteIndex(index)}>{paletteIndex === index && <Check />}</button>)}</div></div>
           <RangeControl label="Padding" value={padding} min={24} max={96} unit="px" onChange={setPadding} />
