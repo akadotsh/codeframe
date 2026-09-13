@@ -339,11 +339,6 @@ export function App() {
                   aria-pressed={aspectRatio === option.value}
                   onClick={() => setAspectRatio(option.value)}
                 >
-                  <span
-                    className="aspect-ratio-shape"
-                    style={{ aspectRatio: option.ratio ?? 1.45 }}
-                    aria-hidden="true"
-                  />
                   <span>{option.value === "auto" ? "Auto" : option.value}</span>
                 </button>
               ))}
