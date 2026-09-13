@@ -1,20 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Braces, Check, Download, Monitor, Terminal } from "lucide-react";
+import { Braces, Check, ChevronDown, Download, Monitor, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
-
-type Palette = { name: string; colors: [string, string]; card: string; text: string; muted: string; accent: string };
-
-const palettes: Palette[] = [
-  { name: "Graphite", colors: ["#282a3a", "#5b526e"], card: "#111116", text: "#f1eff5", muted: "#74717e", accent: "#a79af2" },
-  { name: "Tide", colors: ["#123f4c", "#55736f"], card: "#0c1519", text: "#e7f1f0", muted: "#718484", accent: "#8ec8bd" },
-  { name: "Clay", colors: ["#5f342f", "#98705d"], card: "#17110f", text: "#f5ece8", muted: "#88736b", accent: "#d8a88f" },
-  { name: "Ink", colors: ["#202c50", "#5c4c7a"], card: "#0d101b", text: "#eff1fa", muted: "#6f7488", accent: "#9daae2" },
-  { name: "Mono", colors: ["#292a2f", "#606168"], card: "#101012", text: "#f0f0f1", muted: "#77787e", accent: "#c3c3c7" },
-  { name: "Rosewood", colors: ["#4c2c3b", "#885865"], card: "#171013", text: "#f6ecef", muted: "#8b727b", accent: "#d7a2b5" },
-];
+import { palettes } from "./palettes";
 
 const samples: Record<string, string> = {
   TypeScript: `const createFrame = (code: string) => {\n  return {\n    title: "hello-world.ts",\n    theme: "graphite",\n    ready: true,\n  };\n};\n\nconsole.log(createFrame("Ship it."));`,
@@ -37,6 +27,7 @@ function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width:
 
 export function App() {
   const [paletteIndex, setPaletteIndex] = useState(0);
+  const [showAllPalettes, setShowAllPalettes] = useState(false);
   const [language, setLanguage] = useState("TypeScript");
   const [code, setCode] = useState(samples.TypeScript);
   const [mode, setMode] = useState<"window" | "terminal">("window");
@@ -47,6 +38,7 @@ export function App() {
   const [title, setTitle] = useState("hello-world.ts");
   const [downloaded, setDownloaded] = useState(false);
   const palette = palettes[paletteIndex];
+  const visiblePalettes = showAllPalettes ? palettes : palettes.slice(0, 6);
   const lines = useMemo(() => code.split("\n"), [code]);
 
   const chooseLanguage = (next: string) => {
@@ -144,7 +136,7 @@ export function App() {
         <aside className="settings-panel">
           <div className="settings-heading"><div><h1>Appearance</h1><p>Adjust the exported image.</p></div></div>
           <div className="setting-group"><label className="setting-label" htmlFor="language-select">Language</label><Select value={language} onValueChange={chooseLanguage}><SelectTrigger id="language-select" className="select-trigger"><SelectValue /></SelectTrigger><SelectContent>{Object.keys(samples).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></div>
-          <div className="setting-group"><div className="setting-label"><span>Color palette</span><span>{palette.name}</span></div><div className="palette-grid">{palettes.map((item, index) => <button key={item.name} aria-label={`Use ${item.name} palette`} aria-pressed={paletteIndex === index} className={paletteIndex === index ? "palette active" : "palette"} style={{ background: `linear-gradient(135deg, ${item.colors[0]}, ${item.colors[1]})` }} onClick={() => setPaletteIndex(index)}>{paletteIndex === index && <Check />}</button>)}</div></div>
+          <div className="setting-group"><div className="setting-label"><span>Color palette</span><button className="palette-expand" aria-label={showAllPalettes ? "Show fewer color palettes" : "Show all color palettes"} aria-expanded={showAllPalettes} aria-controls="palette-grid" onClick={() => setShowAllPalettes((current) => !current)}><span>{palette.name}</span><ChevronDown /></button></div><div className="palette-grid" id="palette-grid">{visiblePalettes.map((item, index) => <button key={item.name} aria-label={`Use ${item.name} palette`} aria-pressed={paletteIndex === index} className={`${paletteIndex === index ? "palette active" : "palette"}${index >= 6 ? " extra" : ""}`} style={{ background: `linear-gradient(135deg, ${item.colors[0]}, ${item.colors[1]})` }} onClick={() => setPaletteIndex(index)}>{paletteIndex === index && <Check />}</button>)}</div></div>
           <RangeControl label="Padding" value={padding} min={24} max={96} unit="px" onChange={setPadding} />
           <RangeControl label="Corner radius" value={radius} min={0} max={36} unit="px" onChange={setRadius} />
           <RangeControl label="Font size" value={fontSize} min={13} max={22} unit="px" onChange={setFontSize} />
