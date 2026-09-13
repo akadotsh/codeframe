@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Braces, Check, ChevronDown, Download, Monitor, Terminal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { palettes } from "./palettes";
@@ -15,12 +21,34 @@ const samples: Record<string, string> = {
   Go: `package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("Frame is ready")\n}`,
 };
 
-const extensions: Record<string, string> = { TypeScript: "ts", JavaScript: "js", Python: "py", CSS: "css", Rust: "rs", Go: "go" };
-const languageIds: Record<string, "typescript" | "javascript" | "python" | "css" | "rust" | "go"> = { TypeScript: "typescript", JavaScript: "javascript", Python: "python", CSS: "css", Rust: "rust", Go: "go" };
+const extensions: Record<string, string> = {
+  TypeScript: "ts",
+  JavaScript: "js",
+  Python: "py",
+  CSS: "css",
+  Rust: "rs",
+  Go: "go",
+};
+const languageIds: Record<string, "typescript" | "javascript" | "python" | "css" | "rust" | "go"> =
+  {
+    TypeScript: "typescript",
+    JavaScript: "javascript",
+    Python: "python",
+    CSS: "css",
+    Rust: "rust",
+    Go: "go",
+  };
 const highlightTheme = "github-dark-default";
 const loadHighlighter = () => import("./highlighter").then((module) => module.highlighterPromise);
 
-function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number) {
+function roundedRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
   ctx.beginPath();
   ctx.roundRect(x, y, width, height, Math.min(radius, width / 2, height / 2));
 }
@@ -74,28 +102,55 @@ export function App() {
     ctx.fillRect(0, 0, width, height);
     ctx.fillStyle = "rgba(255,255,255,.08)";
     for (let x = -height; x < width; x += 54) {
-      ctx.save(); ctx.translate(x, 0); ctx.rotate(-0.34); ctx.fillRect(0, -height / 2, 1, height * 2); ctx.restore();
+      ctx.save();
+      ctx.translate(x, 0);
+      ctx.rotate(-0.34);
+      ctx.fillRect(0, -height / 2, 1, height * 2);
+      ctx.restore();
     }
     const x = padding;
     const y = padding;
     const cardWidth = width - padding * 2;
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,.32)"; ctx.shadowBlur = 44; ctx.shadowOffsetY = 22;
-    roundedRect(ctx, x, y, cardWidth, cardHeight, radius); ctx.fillStyle = palette.card; ctx.fill(); ctx.restore();
-    ctx.save(); roundedRect(ctx, x, y, cardWidth, cardHeight, radius); ctx.clip();
-    ctx.fillStyle = "rgba(255,255,255,.025)"; ctx.fillRect(x, y, cardWidth, 70);
+    ctx.shadowColor = "rgba(0,0,0,.32)";
+    ctx.shadowBlur = 44;
+    ctx.shadowOffsetY = 22;
+    roundedRect(ctx, x, y, cardWidth, cardHeight, radius);
+    ctx.fillStyle = palette.card;
+    ctx.fill();
+    ctx.restore();
+    ctx.save();
+    roundedRect(ctx, x, y, cardWidth, cardHeight, radius);
+    ctx.clip();
+    ctx.fillStyle = "rgba(255,255,255,.025)";
+    ctx.fillRect(x, y, cardWidth, 70);
     if (mode === "window") {
-      ["#ff5f57", "#febc2e", "#28c840"].forEach((color, index) => { ctx.beginPath(); ctx.arc(x + 34 + index * 25, y + 35, 7, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); });
+      ["#ff5f57", "#febc2e", "#28c840"].forEach((color, index) => {
+        ctx.beginPath();
+        ctx.arc(x + 34 + index * 25, y + 35, 7, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
+      });
     } else {
-      ctx.fillStyle = palette.accent; ctx.font = "600 16px 'Geist Mono Variable', ui-monospace, monospace"; ctx.fillText(">_", x + 30, y + 41);
+      ctx.fillStyle = palette.accent;
+      ctx.font = "600 16px 'Geist Mono Variable', ui-monospace, monospace";
+      ctx.fillText(">_", x + 30, y + 41);
     }
-    ctx.fillStyle = palette.muted; ctx.font = "500 15px 'Geist Mono Variable', ui-monospace, monospace";
-    ctx.textAlign = "center"; ctx.fillText(title, width / 2, y + 41); ctx.textAlign = "left";
+    ctx.fillStyle = palette.muted;
+    ctx.font = "500 15px 'Geist Mono Variable', ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(title, width / 2, y + 41);
+    ctx.textAlign = "left";
     const codeY = y + chromeHeight + 38;
     ctx.font = `430 ${fontSize}px 'Geist Mono Variable', ui-monospace, monospace`;
     highlightedLines.forEach((tokens, index) => {
       const baseline = codeY + index * lineHeight;
-      if (lineNumbers) { ctx.fillStyle = palette.muted; ctx.textAlign = "right"; ctx.fillText(String(index + 1), x + 62, baseline); ctx.textAlign = "left"; }
+      if (lineNumbers) {
+        ctx.fillStyle = palette.muted;
+        ctx.textAlign = "right";
+        ctx.fillText(String(index + 1), x + 62, baseline);
+        ctx.textAlign = "left";
+      }
       let tokenX = x + (lineNumbers ? 94 : 46);
       tokens.forEach((token) => {
         ctx.fillStyle = token.color || palette.text;
@@ -107,51 +162,250 @@ export function App() {
     canvas.toBlob((blob) => {
       if (!blob) return;
       const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob); link.download = `${title.replace(/\.[^.]+$/, "") || "vignette"}.png`; link.click(); URL.revokeObjectURL(link.href);
-      setDownloaded(true); window.setTimeout(() => setDownloaded(false), 1800);
+      link.href = URL.createObjectURL(blob);
+      link.download = `${title.replace(/\.[^.]+$/, "") || "vignette"}.png`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+      setDownloaded(true);
+      window.setTimeout(() => setDownloaded(false), 1800);
     }, "image/png");
   };
 
   return (
     <main className="app-shell">
       <header className="topbar">
-        <a className="brand" href="/" aria-label="Vignette home"><span className="brand-mark"><Braces size={18} strokeWidth={2.2} /></span><span>Vignette</span></a>
-        <div className="topbar-actions"><Button className="download-button" onClick={downloadPng} aria-live="polite">{downloaded ? <Check /> : <Download />}{downloaded ? "Exported" : "Export PNG"}</Button></div>
+        <a className="brand" href="/" aria-label="Vignette home">
+          <span className="brand-mark">
+            <Braces size={18} strokeWidth={2.2} />
+          </span>
+          <span>Vignette</span>
+        </a>
+        <div className="topbar-actions">
+          <Button className="download-button" onClick={downloadPng} aria-live="polite">
+            {downloaded ? <Check /> : <Download />}
+            {downloaded ? "Exported" : "Export PNG"}
+          </Button>
+        </div>
       </header>
 
       <section className="workspace">
         <div className="canvas-area">
-          <div className="canvas-toolbar" aria-label="Preview type"><div className="segmented"><button className={mode === "window" ? "active" : ""} onClick={() => setMode("window")}><Monitor /> Window</button><button className={mode === "terminal" ? "active" : ""} onClick={() => setMode("terminal")}><Terminal /> Terminal</button></div><span className="canvas-size">1200 × auto</span></div>
+          <div className="canvas-toolbar" aria-label="Preview type">
+            <div className="segmented">
+              <button
+                className={mode === "window" ? "active" : ""}
+                onClick={() => setMode("window")}
+              >
+                <Monitor /> Window
+              </button>
+              <button
+                className={mode === "terminal" ? "active" : ""}
+                onClick={() => setMode("terminal")}
+              >
+                <Terminal /> Terminal
+              </button>
+            </div>
+            <span className="canvas-size">1200 × auto</span>
+          </div>
           <div className="preview-wrap">
-            <div className="preview-stage" style={{ background: `linear-gradient(135deg, ${palette.colors[0]}, ${palette.colors[1]})`, padding: `${padding}px` }}>
+            <div
+              className="preview-stage"
+              style={{
+                background: `linear-gradient(135deg, ${palette.colors[0]}, ${palette.colors[1]})`,
+                padding: `${padding}px`,
+              }}
+            >
               <div className="grain" aria-hidden="true" />
-              <div className="code-window" style={{ borderRadius: `${radius}px`, background: palette.card, color: palette.text }}>
-                <div className="window-bar"><div className="window-side">{mode === "window" ? <span className="traffic"><i /><i /><i /></span> : <span className="terminal-glyph" style={{ color: palette.accent }}>&gt;_</span>}</div><input value={title} onChange={(event) => setTitle(event.target.value)} aria-label="Snippet title" /><span className="language-pill">{language}</span></div>
-                <div className="editor-shell" style={{ fontSize: `${fontSize}px` }}>{lineNumbers && <pre className="line-numbers" style={{ color: palette.muted }}>{lines.map((_, i) => `${i + 1}\n`)}</pre>}<SyntaxEditor code={code} language={language} accent={palette.accent} onChange={setCode} /></div>
+              <div
+                className="code-window"
+                style={{
+                  borderRadius: `${radius}px`,
+                  background: palette.card,
+                  color: palette.text,
+                }}
+              >
+                <div className="window-bar">
+                  <div className="window-side">
+                    {mode === "window" ? (
+                      <span className="traffic">
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    ) : (
+                      <span className="terminal-glyph" style={{ color: palette.accent }}>
+                        &gt;_
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    value={title}
+                    onChange={(event) => setTitle(event.target.value)}
+                    aria-label="Snippet title"
+                  />
+                  <span className="language-pill">{language}</span>
+                </div>
+                <div className="editor-shell" style={{ fontSize: `${fontSize}px` }}>
+                  {lineNumbers && (
+                    <pre className="line-numbers" style={{ color: palette.muted }}>
+                      {lines.map((_, i) => `${i + 1}\n`)}
+                    </pre>
+                  )}
+                  <SyntaxEditor
+                    code={code}
+                    language={language}
+                    accent={palette.accent}
+                    onChange={setCode}
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <aside className="settings-panel">
-          <div className="settings-heading"><div><h1>Appearance</h1><p>Adjust the exported image.</p></div></div>
-          <div className="setting-group"><label className="setting-label" htmlFor="language-select">Language</label><Select value={language} onValueChange={chooseLanguage}><SelectTrigger id="language-select" className="select-trigger"><SelectValue /></SelectTrigger><SelectContent>{Object.keys(samples).map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent></Select></div>
-          <div className="setting-group"><div className="setting-label"><span>Color palette</span><button className="palette-expand" aria-label={showAllPalettes ? "Show fewer color palettes" : "Show all color palettes"} aria-expanded={showAllPalettes} aria-controls="palette-grid" onClick={() => setShowAllPalettes((current) => !current)}><span>{palette.name}</span><ChevronDown /></button></div><div className="palette-grid" id="palette-grid">{visiblePalettes.map((item, index) => <button key={item.name} aria-label={`Use ${item.name} palette`} aria-pressed={paletteIndex === index} className={`${paletteIndex === index ? "palette active" : "palette"}${index >= 6 ? " extra" : ""}`} style={{ background: `linear-gradient(135deg, ${item.colors[0]}, ${item.colors[1]})` }} onClick={() => setPaletteIndex(index)}>{paletteIndex === index && <Check />}</button>)}</div></div>
-          <RangeControl label="Padding" value={padding} min={24} max={96} unit="px" onChange={setPadding} />
-          <RangeControl label="Corner radius" value={radius} min={0} max={36} unit="px" onChange={setRadius} />
-          <RangeControl label="Font size" value={fontSize} min={13} max={22} unit="px" onChange={setFontSize} />
-          <div className="switch-list"><label><span><b>Line numbers</b><small>Show a gutter beside the code</small></span><Switch checked={lineNumbers} onCheckedChange={setLineNumbers} /></label></div>
+          <div className="settings-heading">
+            <div>
+              <h1>Appearance</h1>
+              <p>Adjust the exported image.</p>
+            </div>
+          </div>
+          <div className="setting-group">
+            <label className="setting-label" htmlFor="language-select">
+              Language
+            </label>
+            <Select value={language} onValueChange={chooseLanguage}>
+              <SelectTrigger id="language-select" className="select-trigger">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.keys(samples).map((item) => (
+                  <SelectItem key={item} value={item}>
+                    {item}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="setting-group">
+            <div className="setting-label">
+              <span>Color palette</span>
+              <button
+                className="palette-expand"
+                aria-label={
+                  showAllPalettes ? "Show fewer color palettes" : "Show all color palettes"
+                }
+                aria-expanded={showAllPalettes}
+                aria-controls="palette-grid"
+                onClick={() => setShowAllPalettes((current) => !current)}
+              >
+                <span>{palette.name}</span>
+                <ChevronDown />
+              </button>
+            </div>
+            <div className="palette-grid" id="palette-grid">
+              {visiblePalettes.map((item, index) => (
+                <button
+                  key={item.name}
+                  aria-label={`Use ${item.name} palette`}
+                  aria-pressed={paletteIndex === index}
+                  className={`${paletteIndex === index ? "palette active" : "palette"}${index >= 6 ? " extra" : ""}`}
+                  style={{
+                    background: `linear-gradient(135deg, ${item.colors[0]}, ${item.colors[1]})`,
+                  }}
+                  onClick={() => setPaletteIndex(index)}
+                >
+                  {paletteIndex === index && <Check />}
+                </button>
+              ))}
+            </div>
+          </div>
+          <RangeControl
+            label="Padding"
+            value={padding}
+            min={24}
+            max={96}
+            unit="px"
+            onChange={setPadding}
+          />
+          <RangeControl
+            label="Corner radius"
+            value={radius}
+            min={0}
+            max={36}
+            unit="px"
+            onChange={setRadius}
+          />
+          <RangeControl
+            label="Font size"
+            value={fontSize}
+            min={13}
+            max={22}
+            unit="px"
+            onChange={setFontSize}
+          />
+          <div className="switch-list">
+            <label>
+              <span>
+                <b>Line numbers</b>
+                <small>Show a gutter beside the code</small>
+              </span>
+              <Switch checked={lineNumbers} onCheckedChange={setLineNumbers} />
+            </label>
+          </div>
         </aside>
       </section>
     </main>
   );
 }
 
-function RangeControl({ label, value, min, max, unit, onChange }: { label: string; value: number; min: number; max: number; unit: string; onChange: (value: number) => void }) {
-  return <div className="setting-group range-control"><div className="setting-label"><span>{label}</span><output>{value}{unit}</output></div><Slider value={[value]} min={min} max={max} step={1} onValueChange={(next) => onChange(next[0])} aria-label={label} /></div>;
+function RangeControl({
+  label,
+  value,
+  min,
+  max,
+  unit,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  unit: string;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <div className="setting-group range-control">
+      <div className="setting-label">
+        <span>{label}</span>
+        <output>
+          {value}
+          {unit}
+        </output>
+      </div>
+      <Slider
+        value={[value]}
+        min={min}
+        max={max}
+        step={1}
+        onValueChange={(next) => onChange(next[0])}
+        aria-label={label}
+      />
+    </div>
+  );
 }
 
-function SyntaxEditor({ code, language, accent, onChange }: { code: string; language: string; accent: string; onChange: (code: string) => void }) {
+function SyntaxEditor({
+  code,
+  language,
+  accent,
+  onChange,
+}: {
+  code: string;
+  language: string;
+  accent: string;
+  onChange: (code: string) => void;
+}) {
   const [highlighted, setHighlighted] = useState("");
 
   useEffect(() => {
@@ -173,7 +427,11 @@ function SyntaxEditor({ code, language, accent, onChange }: { code: string; lang
 
   return (
     <div className="syntax-editor">
-      <div className="highlight-layer" aria-hidden="true" dangerouslySetInnerHTML={{ __html: highlighted }} />
+      <div
+        className="highlight-layer"
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{ __html: highlighted }}
+      />
       <textarea
         aria-label="Code snippet"
         value={code}
