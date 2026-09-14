@@ -7,39 +7,39 @@ import {
 } from "react";
 import { Braces } from "lucide-react";
 import * as stylex from "@stylexjs/stylex";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { AppearancePanel } from "./components/appearance-panel";
 import { EditorPreview } from "./components/editor-preview";
 import { SaveControl } from "./components/save-control";
 import { languageConfig, type Language } from "./config/editor";
-import {
-  aspectRatios,
-  clampFrameWidth,
-  getFrameMetrics,
-  type AspectRatio,
-  type ImageFormat,
-  type PreviewMode,
-} from "./config/export";
+import { aspectRatios, clampFrameWidth, getFrameMetrics, type ImageFormat } from "./config/export";
 import type { SyntaxTheme } from "./config/themes";
+import { resolveSnippetState, toSnippetSearch, type SnippetState } from "./config/snippet-state";
 import { saveSnippetImage } from "./lib/save-snippet-image";
 import { palettes } from "./palettes";
 import { appStyles } from "./styles/app.stylex";
 
 export function App() {
-  const [paletteIndex, setPaletteIndex] = useState(0);
-  const [language, setLanguage] = useState<Language>("TypeScript");
-  const [code, setCode] = useState<string>(languageConfig.TypeScript.sample);
-  const [mode, setMode] = useState<PreviewMode>("window");
-  const [padding, setPadding] = useState(64);
-  const [radius, setRadius] = useState(22);
-  const [fontSize, setFontSize] = useState(16);
-  const [frameWidth, setFrameWidth] = useState(1200);
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("auto");
-  const [lineNumbers, setLineNumbers] = useState(true);
-  const [titleBar, setTitleBar] = useState(true);
-  const [title, setTitle] = useState("hello-world.ts");
-  const [imageFormat, setImageFormat] = useState<ImageFormat>("png");
+  const search = useSearch({ from: "/" });
+  const navigate = useNavigate({ from: "/" });
+  const state = resolveSnippetState(search);
+  const {
+    aspectRatio,
+    code,
+    fontSize,
+    frameWidth,
+    imageFormat,
+    language,
+    lineNumbers,
+    mode,
+    padding,
+    paletteIndex,
+    radius,
+    syntaxTheme,
+    title,
+    titleBar,
+  } = state;
   const [saved, setSaved] = useState(false);
-  const [syntaxTheme, setSyntaxTheme] = useState<SyntaxTheme>("github-dark-default");
   const [previewTheme, setPreviewTheme] = useState<SyntaxTheme | null>(null);
   const [resizing, setResizing] = useState(false);
   const previewStageRef = useRef<HTMLDivElement>(null);
@@ -67,6 +67,10 @@ export function App() {
     [fontSize, frameWidth, lines.length, padding, selectedAspectRatio.ratio, titleBar],
   );
 
+  const updateState = (patch: Partial<SnippetState>) => {
+    void navigate({ search: toSnippetSearch({ ...state, ...patch }), replace: true });
+  };
+
   const startResize = (event: ReactPointerEvent<HTMLButtonElement>, direction: 1 | -1) => {
     event.currentTarget.setPointerCapture(event.pointerId);
     const previewWidth = previewStageRef.current?.getBoundingClientRect().width ?? frameWidth;
@@ -89,9 +93,11 @@ export function App() {
     )
       return;
     const { startX, startWidth, pixelsToExport, direction } = resizeState.current;
-    setFrameWidth(
-      clampFrameWidth(startWidth + (event.clientX - startX) * pixelsToExport * direction),
-    );
+    updateState({
+      frameWidth: clampFrameWidth(
+        startWidth + (event.clientX - startX) * pixelsToExport * direction,
+      ),
+    });
   };
 
   const stopResize = () => {
@@ -103,16 +109,18 @@ export function App() {
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
     const step = event.shiftKey ? 100 : 20;
-    setFrameWidth((current) =>
-      clampFrameWidth(current + (event.key === "ArrowRight" ? step : -step)),
-    );
+    updateState({
+      frameWidth: clampFrameWidth(frameWidth + (event.key === "ArrowRight" ? step : -step)),
+    });
   };
 
   const chooseLanguage = (nextLanguage: Language) => {
     const previousSample = languageConfig[language].sample;
-    setLanguage(nextLanguage);
-    setTitle(`hello-world.${languageConfig[nextLanguage].extension}`);
-    if (code === previousSample) setCode(languageConfig[nextLanguage].sample);
+    updateState({
+      language: nextLanguage,
+      title: `hello-world.${languageConfig[nextLanguage].extension}`,
+      code: code === previousSample ? languageConfig[nextLanguage].sample : code,
+    });
   };
 
   const saveImage = async (formatValue: ImageFormat) => {
@@ -148,7 +156,7 @@ export function App() {
           <SaveControl
             format={imageFormat}
             saved={saved}
-            onFormatChange={setImageFormat}
+            onFormatChange={(next) => updateState({ imageFormat: next })}
             onSave={saveImage}
           />
         </div>
@@ -171,12 +179,12 @@ export function App() {
           title={title}
           titleBar={titleBar}
           syntaxTheme={previewTheme ?? syntaxTheme}
-          onCodeChange={setCode}
+          onCodeChange={(next) => updateState({ code: next })}
           onResizeEnd={stopResize}
           onResizeKeyDown={resizeWithKeyboard}
           onResizeMove={resizeFrame}
           onResizeStart={startResize}
-          onTitleChange={setTitle}
+          onTitleChange={(next) => updateState({ title: next })}
         />
         <AppearancePanel
           aspectRatio={aspectRatio}
@@ -189,17 +197,17 @@ export function App() {
           radius={radius}
           titleBar={titleBar}
           syntaxTheme={syntaxTheme}
-          onAspectRatioChange={setAspectRatio}
-          onFontSizeChange={setFontSize}
+          onAspectRatioChange={(next) => updateState({ aspectRatio: next })}
+          onFontSizeChange={(next) => updateState({ fontSize: next })}
           onLanguageChange={chooseLanguage}
-          onLineNumbersChange={setLineNumbers}
-          onModeChange={setMode}
-          onPaddingChange={setPadding}
-          onPaletteChange={setPaletteIndex}
-          onRadiusChange={setRadius}
-          onTitleBarChange={setTitleBar}
+          onLineNumbersChange={(next) => updateState({ lineNumbers: next })}
+          onModeChange={(next) => updateState({ mode: next })}
+          onPaddingChange={(next) => updateState({ padding: next })}
+          onPaletteChange={(next) => updateState({ paletteIndex: next })}
+          onRadiusChange={(next) => updateState({ radius: next })}
+          onTitleBarChange={(next) => updateState({ titleBar: next })}
           onThemeChange={(theme) => {
-            setSyntaxTheme(theme);
+            updateState({ syntaxTheme: theme });
             setPreviewTheme(null);
           }}
           onThemePreview={setPreviewTheme}
