@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { languages, type Language } from "../config/editor";
-import { aspectRatios, type AspectRatio } from "../config/export";
+import { aspectRatios, type AspectRatio, type PreviewMode } from "../config/export";
 import { syntaxThemes, type SyntaxTheme } from "../config/themes";
 import { palettes } from "../palettes";
 import { RangeControl } from "./range-control";
@@ -15,6 +15,7 @@ type AppearancePanelProps = {
   fontSize: number;
   language: Language;
   lineNumbers: boolean;
+  mode: PreviewMode;
   padding: number;
   paletteIndex: number;
   radius: number;
@@ -24,6 +25,7 @@ type AppearancePanelProps = {
   onFontSizeChange: (value: number) => void;
   onLanguageChange: (value: Language) => void;
   onLineNumbersChange: (value: boolean) => void;
+  onModeChange: (value: PreviewMode) => void;
   onPaddingChange: (value: number) => void;
   onPaletteChange: (value: number) => void;
   onRadiusChange: (value: number) => void;
@@ -159,6 +161,16 @@ export function AppearancePanel(props: AppearancePanelProps) {
             <small>Show filename and window controls</small>
           </span>
           <Switch checked={props.titleBar} onCheckedChange={props.onTitleBarChange} />
+        </label>
+        <label>
+          <span>
+            <b>Terminal frame</b>
+            <small>Use terminal-style window controls</small>
+          </span>
+          <Switch
+            checked={props.mode === "terminal"}
+            onCheckedChange={(checked) => props.onModeChange(checked ? "terminal" : "window")}
+          />
         </label>
       </div>
     </aside>

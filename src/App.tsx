@@ -170,7 +170,6 @@ export function App() {
           titleBar={titleBar}
           syntaxTheme={previewTheme ?? syntaxTheme}
           onCodeChange={setCode}
-          onModeChange={setMode}
           onResizeEnd={stopResize}
           onResizeKeyDown={resizeWithKeyboard}
           onResizeMove={resizeFrame}
@@ -182,6 +181,7 @@ export function App() {
           fontSize={fontSize}
           language={language}
           lineNumbers={lineNumbers}
+          mode={mode}
           padding={padding}
           paletteIndex={paletteIndex}
           radius={radius}
@@ -191,6 +191,7 @@ export function App() {
           onFontSizeChange={setFontSize}
           onLanguageChange={chooseLanguage}
           onLineNumbersChange={setLineNumbers}
+          onModeChange={setMode}
           onPaddingChange={setPadding}
           onPaletteChange={setPaletteIndex}
           onRadiusChange={setRadius}

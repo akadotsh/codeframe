@@ -5,7 +5,6 @@ import type { SyntaxTheme } from "../config/themes";
 import type { Palette } from "../palettes";
 import { useSyntaxThemeColors } from "../hooks/use-syntax-theme-colors";
 import { FrameResizeHandle } from "./frame-resize-handle";
-import { PreviewModeSelector } from "./preview-mode-selector";
 import { SyntaxEditor } from "./syntax-editor";
 
 type EditorPreviewProps = {
@@ -25,7 +24,6 @@ type EditorPreviewProps = {
   titleBar: boolean;
   syntaxTheme: SyntaxTheme;
   onCodeChange: (value: string) => void;
-  onModeChange: (value: PreviewMode) => void;
   onResizeEnd: () => void;
   onResizeKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
   onResizeMove: (event: PointerEvent<HTMLButtonElement>) => void;
@@ -43,12 +41,6 @@ export function EditorPreview(props: EditorPreviewProps) {
 
   return (
     <div className="canvas-area">
-      <div className="canvas-toolbar" aria-label="Preview type">
-        <PreviewModeSelector mode={props.mode} onChange={props.onModeChange} />
-        <span className="canvas-size">
-          {frameMetrics.width} × {frameMetrics.height}
-        </span>
-      </div>
       <div className="preview-wrap">
         <div
           ref={props.previewStageRef}
