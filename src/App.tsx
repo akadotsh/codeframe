@@ -5,7 +5,7 @@ import {
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Braces } from "lucide-react";
+import { Braces, Check, Copy, RotateCcw } from "lucide-react";
 import * as stylex from "@stylexjs/stylex";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { AppearancePanel } from "./components/appearance-panel";
@@ -40,6 +40,7 @@ export function App() {
     titleBar,
   } = state;
   const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [previewTheme, setPreviewTheme] = useState<SyntaxTheme | null>(null);
   const [resizing, setResizing] = useState(false);
   const previewStageRef = useRef<HTMLDivElement>(null);
@@ -69,6 +70,19 @@ export function App() {
 
   const updateState = (patch: Partial<SnippetState>) => {
     void navigate({ search: toSnippetSearch({ ...state, ...patch }), replace: true });
+  };
+
+  const resetSnippet = () => {
+    setPreviewTheme(null);
+    setSaved(false);
+    setCopied(false);
+    void navigate({ search: {}, replace: true });
+  };
+
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
   };
 
   const startResize = (event: ReactPointerEvent<HTMLButtonElement>, direction: 1 | -1) => {
@@ -153,6 +167,25 @@ export function App() {
           <span>Vignette</span>
         </a>
         <div {...stylex.props(appStyles.topbarActions)}>
+          <button
+            {...stylex.props(appStyles.utilityButton)}
+            type="button"
+            disabled={Object.values(search).every((value) => value === undefined)}
+            onClick={resetSnippet}
+          >
+            <RotateCcw {...stylex.props(appStyles.utilityIcon)} />
+            <span {...stylex.props(appStyles.utilityLabel)}>Reset</span>
+          </button>
+          <button {...stylex.props(appStyles.utilityButton)} type="button" onClick={copyLink}>
+            {copied ? (
+              <Check {...stylex.props(appStyles.utilityIcon)} />
+            ) : (
+              <Copy {...stylex.props(appStyles.utilityIcon)} />
+            )}
+            <span {...stylex.props(appStyles.utilityLabel)} aria-live="polite">
+              {copied ? "Copied" : "Copy link"}
+            </span>
+          </button>
           <SaveControl
             format={imageFormat}
             saved={saved}
