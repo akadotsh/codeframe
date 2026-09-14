@@ -2,30 +2,68 @@
 
 import * as React from "react";
 import { Switch as SwitchPrimitive } from "radix-ui";
+import * as stylex from "@stylexjs/stylex";
 
-import { cn } from "@/lib/utils";
+const styles = stylex.create({
+  root: {
+    width: 32,
+    height: 18,
+    display: "inline-flex",
+    flexShrink: 0,
+    alignItems: "center",
+    borderWidth: 1,
+    borderStyle: "solid",
+    borderColor: "transparent",
+    borderRadius: 999,
+    padding: 0,
+    backgroundColor: "#303039",
+    cursor: "pointer",
+    outline: "none",
+    transition: "background-color 150ms ease",
+    ":focus-visible": {
+      outlineWidth: 2,
+      outlineStyle: "solid",
+      outlineColor: "rgba(178, 168, 238, 0.85)",
+      outlineOffset: 3,
+    },
+    ":disabled": { cursor: "not-allowed", opacity: 0.5 },
+  },
+  checked: { backgroundColor: "#9186d8" },
+  small: { width: 24, height: 14 },
+  thumb: {
+    width: 16,
+    height: 16,
+    display: "block",
+    borderRadius: "50%",
+    backgroundColor: "#a5a5ae",
+    pointerEvents: "none",
+    transform: "translateX(0)",
+    transition: "transform 150ms cubic-bezier(0.23, 1, 0.32, 1)",
+  },
+  thumbChecked: { backgroundColor: "#111", transform: "translateX(14px)" },
+  thumbSmall: { width: 12, height: 12 },
+  thumbSmallChecked: { transform: "translateX(10px)" },
+});
 
 function Switch({
-  className,
   size = "default",
+  checked,
   ...props
-}: React.ComponentProps<typeof SwitchPrimitive.Root> & {
+}: Omit<React.ComponentProps<typeof SwitchPrimitive.Root>, "className"> & {
   size?: "sm" | "default";
 }) {
   return (
     <SwitchPrimitive.Root
-      data-slot="switch"
-      data-size={size}
-      className={cn(
-        "peer group/switch inline-flex shrink-0 items-center rounded-full border border-transparent shadow-xs transition-all outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-[1.15rem] data-[size=default]:w-8 data-[size=sm]:h-3.5 data-[size=sm]:w-6 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input dark:data-[state=unchecked]:bg-input/80",
-        className,
-      )}
+      {...stylex.props(styles.root, checked && styles.checked, size === "sm" && styles.small)}
+      checked={checked}
       {...props}
     >
       <SwitchPrimitive.Thumb
-        data-slot="switch-thumb"
-        className={cn(
-          "pointer-events-none block rounded-full bg-background ring-0 transition-transform group-data-[size=default]/switch:size-4 group-data-[size=sm]/switch:size-3 data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0 dark:data-[state=checked]:bg-primary-foreground dark:data-[state=unchecked]:bg-foreground",
+        {...stylex.props(
+          styles.thumb,
+          checked && styles.thumbChecked,
+          size === "sm" && styles.thumbSmall,
+          checked && size === "sm" && styles.thumbSmallChecked,
         )}
       />
     </SwitchPrimitive.Root>

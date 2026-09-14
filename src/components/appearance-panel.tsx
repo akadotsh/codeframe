@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
+import * as stylex from "@stylexjs/stylex";
 import { Switch } from "@/components/ui/switch";
 import { languages, type Language } from "../config/editor";
 import { aspectRatios, type AspectRatio, type PreviewMode } from "../config/export";
 import { syntaxThemes, type SyntaxTheme } from "../config/themes";
 import { palettes } from "../palettes";
+import { appearanceStyles } from "../styles/appearance.stylex";
 import { RangeControl } from "./range-control";
 import { SearchableSelect } from "./searchable-select";
 
@@ -40,15 +42,15 @@ export function AppearancePanel(props: AppearancePanelProps) {
   const visiblePalettes = showAllPalettes ? palettes : palettes.slice(0, 6);
 
   return (
-    <aside className="settings-panel">
-      <div className="settings-heading">
+    <aside {...stylex.props(appearanceStyles.panel)}>
+      <div {...stylex.props(appearanceStyles.heading, appearanceStyles.fullWidth)}>
         <div>
-          <h1>Appearance</h1>
-          <p>Adjust the exported image.</p>
+          <h1 {...stylex.props(appearanceStyles.headingTitle)}>Appearance</h1>
+          <p {...stylex.props(appearanceStyles.headingText)}>Adjust the exported image.</p>
         </div>
       </div>
-      <div className="setting-group">
-        <label className="setting-label" htmlFor="language-select">
+      <div {...stylex.props(appearanceStyles.group)}>
+        <label {...stylex.props(appearanceStyles.label)} htmlFor="language-select">
           Language
         </label>
         <SearchableSelect
@@ -60,8 +62,8 @@ export function AppearancePanel(props: AppearancePanelProps) {
           onChange={props.onLanguageChange}
         />
       </div>
-      <div className="setting-group">
-        <label className="setting-label" htmlFor="theme-select">
+      <div {...stylex.props(appearanceStyles.group)}>
+        <label {...stylex.props(appearanceStyles.label)} htmlFor="theme-select">
           Syntax
         </label>
         <SearchableSelect
@@ -74,46 +76,60 @@ export function AppearancePanel(props: AppearancePanelProps) {
           onPreview={props.onThemePreview}
         />
       </div>
-      <div className="setting-group">
-        <div className="setting-label">
+      <div {...stylex.props(appearanceStyles.group)}>
+        <div {...stylex.props(appearanceStyles.label)}>
           <span>Color palette</span>
           <button
-            className="palette-expand"
+            {...stylex.props(appearanceStyles.paletteExpand)}
             aria-label={showAllPalettes ? "Show fewer color palettes" : "Show all color palettes"}
             aria-expanded={showAllPalettes}
             aria-controls="palette-grid"
             onClick={() => setShowAllPalettes((current) => !current)}
           >
-            <span>{palette.name}</span>
-            <ChevronDown />
+            <span {...stylex.props(appearanceStyles.labelValue)}>{palette.name}</span>
+            <ChevronDown
+              {...stylex.props(
+                appearanceStyles.paletteExpandIcon,
+                showAllPalettes && appearanceStyles.paletteExpandIconOpen,
+              )}
+            />
           </button>
         </div>
-        <div className="palette-grid" id="palette-grid">
+        <div {...stylex.props(appearanceStyles.paletteGrid)} id="palette-grid">
           {visiblePalettes.map((item, index) => (
             <button
               key={item.name}
               aria-label={`Use ${item.name} palette`}
               aria-pressed={props.paletteIndex === index}
-              className={`${props.paletteIndex === index ? "palette active" : "palette"}${index >= 6 ? " extra" : ""}`}
+              {...stylex.props(
+                appearanceStyles.palette,
+                props.paletteIndex === index && appearanceStyles.paletteActive,
+                index >= 6 && appearanceStyles.paletteExtra,
+              )}
               style={{
                 background: `linear-gradient(135deg, ${item.colors[0]}, ${item.colors[1]})`,
               }}
               onClick={() => props.onPaletteChange(index)}
             >
-              {props.paletteIndex === index && <Check />}
+              {props.paletteIndex === index && (
+                <Check {...stylex.props(appearanceStyles.paletteCheck)} />
+              )}
             </button>
           ))}
         </div>
       </div>
-      <div className="setting-group">
-        <div className="setting-label">
+      <div {...stylex.props(appearanceStyles.group)}>
+        <div {...stylex.props(appearanceStyles.label)}>
           <span>Aspect ratio</span>
         </div>
-        <div className="aspect-ratio-grid">
+        <div {...stylex.props(appearanceStyles.ratioGrid)}>
           {aspectRatios.map((option) => (
             <button
               key={option.value}
-              className={`aspect-ratio-option${props.aspectRatio === option.value ? " active" : ""}`}
+              {...stylex.props(
+                appearanceStyles.ratio,
+                props.aspectRatio === option.value && appearanceStyles.ratioActive,
+              )}
               aria-label={option.label}
               aria-pressed={props.aspectRatio === option.value}
               onClick={() => props.onAspectRatioChange(option.value)}
@@ -147,25 +163,31 @@ export function AppearancePanel(props: AppearancePanelProps) {
         unit="px"
         onChange={props.onFontSizeChange}
       />
-      <div className="switch-list">
-        <label>
-          <span>
-            <b>Line numbers</b>
-            <small>Show a gutter beside the code</small>
+      <div {...stylex.props(appearanceStyles.switchList, appearanceStyles.fullWidth)}>
+        <label {...stylex.props(appearanceStyles.switchItem)}>
+          <span {...stylex.props(appearanceStyles.switchCopy)}>
+            <b {...stylex.props(appearanceStyles.switchTitle)}>Line numbers</b>
+            <small {...stylex.props(appearanceStyles.switchText)}>
+              Show a gutter beside the code
+            </small>
           </span>
           <Switch checked={props.lineNumbers} onCheckedChange={props.onLineNumbersChange} />
         </label>
-        <label>
-          <span>
-            <b>Title bar</b>
-            <small>Show filename and window controls</small>
+        <label {...stylex.props(appearanceStyles.switchItem)}>
+          <span {...stylex.props(appearanceStyles.switchCopy)}>
+            <b {...stylex.props(appearanceStyles.switchTitle)}>Title bar</b>
+            <small {...stylex.props(appearanceStyles.switchText)}>
+              Show filename and window controls
+            </small>
           </span>
           <Switch checked={props.titleBar} onCheckedChange={props.onTitleBarChange} />
         </label>
-        <label>
-          <span>
-            <b>Terminal frame</b>
-            <small>Use terminal-style window controls</small>
+        <label {...stylex.props(appearanceStyles.switchItem, appearanceStyles.switchItemLast)}>
+          <span {...stylex.props(appearanceStyles.switchCopy)}>
+            <b {...stylex.props(appearanceStyles.switchTitle)}>Terminal frame</b>
+            <small {...stylex.props(appearanceStyles.switchText)}>
+              Use terminal-style window controls
+            </small>
           </span>
           <Switch
             checked={props.mode === "terminal"}

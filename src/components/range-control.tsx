@@ -1,4 +1,6 @@
 import { Slider } from "@/components/ui/slider";
+import * as stylex from "@stylexjs/stylex";
+import { appearanceStyles } from "../styles/appearance.stylex";
 
 export function RangeControl({
   label,
@@ -16,10 +18,10 @@ export function RangeControl({
   onChange: (value: number) => void;
 }) {
   return (
-    <div className="setting-group range-control">
-      <div className="setting-label">
+    <div {...stylex.props(appearanceStyles.group)}>
+      <div {...stylex.props(appearanceStyles.label)}>
         <span>{label}</span>
-        <output>
+        <output {...stylex.props(appearanceStyles.labelValue)}>
           {value}
           {unit}
         </output>
