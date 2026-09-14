@@ -1,6 +1,7 @@
 import type { KeyboardEvent, PointerEvent, RefObject } from "react";
 import type { Language } from "../config/editor";
 import type { FrameMetrics, PreviewMode } from "../config/export";
+import type { SyntaxTheme } from "../config/themes";
 import type { Palette } from "../palettes";
 import { FrameResizeHandle } from "./frame-resize-handle";
 import { PreviewModeSelector } from "./preview-mode-selector";
@@ -21,6 +22,7 @@ type EditorPreviewProps = {
   resizing: boolean;
   title: string;
   titleBar: boolean;
+  syntaxTheme: SyntaxTheme;
   onCodeChange: (value: string) => void;
   onModeChange: (value: PreviewMode) => void;
   onResizeEnd: () => void;
@@ -117,6 +119,7 @@ export function EditorPreview(props: EditorPreviewProps) {
               <SyntaxEditor
                 code={props.code}
                 language={props.language}
+                theme={props.syntaxTheme}
                 accent={palette.accent}
                 onChange={props.onCodeChange}
               />

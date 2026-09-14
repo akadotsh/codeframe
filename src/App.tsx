@@ -18,6 +18,7 @@ import {
   type ImageFormat,
   type PreviewMode,
 } from "./config/export";
+import type { SyntaxTheme } from "./config/themes";
 import { saveSnippetImage } from "./lib/save-snippet-image";
 import { palettes } from "./palettes";
 
@@ -36,6 +37,8 @@ export function App() {
   const [title, setTitle] = useState("hello-world.ts");
   const [imageFormat, setImageFormat] = useState<ImageFormat>("png");
   const [saved, setSaved] = useState(false);
+  const [syntaxTheme, setSyntaxTheme] = useState<SyntaxTheme>("github-dark-default");
+  const [previewTheme, setPreviewTheme] = useState<SyntaxTheme | null>(null);
   const [resizing, setResizing] = useState(false);
   const previewStageRef = useRef<HTMLDivElement>(null);
   const resizeState = useRef({
@@ -125,6 +128,7 @@ export function App() {
       radius,
       title,
       titleBar,
+      syntaxTheme,
     });
     setSaved(true);
     window.setTimeout(() => setSaved(false), 1800);
@@ -165,6 +169,7 @@ export function App() {
           resizing={resizing}
           title={title}
           titleBar={titleBar}
+          syntaxTheme={previewTheme ?? syntaxTheme}
           onCodeChange={setCode}
           onModeChange={setMode}
           onResizeEnd={stopResize}
@@ -182,6 +187,7 @@ export function App() {
           paletteIndex={paletteIndex}
           radius={radius}
           titleBar={titleBar}
+          syntaxTheme={syntaxTheme}
           onAspectRatioChange={setAspectRatio}
           onFontSizeChange={setFontSize}
           onLanguageChange={chooseLanguage}
@@ -190,6 +196,11 @@ export function App() {
           onPaletteChange={setPaletteIndex}
           onRadiusChange={setRadius}
           onTitleBarChange={setTitleBar}
+          onThemeChange={(theme) => {
+            setSyntaxTheme(theme);
+            setPreviewTheme(null);
+          }}
+          onThemePreview={setPreviewTheme}
         />
       </section>
     </main>

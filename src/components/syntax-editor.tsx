@@ -1,15 +1,18 @@
 import { useEffect, useState } from "react";
 import { languageConfig, type Language } from "../config/editor";
-import { getHighlighter, highlightTheme } from "../lib/highlighting";
+import type { SyntaxTheme } from "../config/themes";
+import { getHighlighter } from "../lib/highlighting";
 
 export function SyntaxEditor({
   code,
   language,
+  theme,
   accent,
   onChange,
 }: {
   code: string;
   language: Language;
+  theme: SyntaxTheme;
   accent: string;
   onChange: (code: string) => void;
 }) {
@@ -18,10 +21,10 @@ export function SyntaxEditor({
   useEffect(() => {
     let current = true;
     const timeout = window.setTimeout(async () => {
-      const highlighter = await getHighlighter(languageConfig[language].highlighter);
+      const highlighter = await getHighlighter(languageConfig[language].highlighter, theme);
       const html = highlighter.codeToHtml(code || " ", {
         lang: languageConfig[language].highlighter,
-        theme: highlightTheme,
+        theme,
       });
       if (current) setHighlighted(html);
     }, 40);
@@ -30,7 +33,7 @@ export function SyntaxEditor({
       current = false;
       window.clearTimeout(timeout);
     };
-  }, [code, language]);
+  }, [code, language, theme]);
 
   return (
     <div className="syntax-editor">

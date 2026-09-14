@@ -6,7 +6,8 @@ import {
   type PreviewMode,
 } from "../config/export";
 import type { Palette } from "../palettes";
-import { getHighlighter, highlightTheme } from "./highlighting";
+import type { SyntaxTheme } from "../config/themes";
+import { getHighlighter } from "./highlighting";
 
 type SaveSnippetImageOptions = {
   code: string;
@@ -21,6 +22,7 @@ type SaveSnippetImageOptions = {
   radius: number;
   title: string;
   titleBar: boolean;
+  syntaxTheme: SyntaxTheme;
 };
 
 function roundedRect(
@@ -77,12 +79,13 @@ export async function saveSnippetImage(options: SaveSnippetImageOptions) {
     radius,
     title,
     titleBar,
+    syntaxTheme,
   } = options;
   await document.fonts.ready;
-  const highlighter = await getHighlighter(languageConfig[language].highlighter);
+  const highlighter = await getHighlighter(languageConfig[language].highlighter, syntaxTheme);
   const highlightedLines = highlighter.codeToTokens(code, {
     lang: languageConfig[language].highlighter,
-    theme: highlightTheme,
+    theme: syntaxTheme,
   }).tokens;
   const scale = 2;
   const { width, height, cardHeight, lineHeight, chromeHeight } = frameMetrics;

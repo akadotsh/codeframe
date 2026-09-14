@@ -10,6 +10,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { languages, type Language } from "../config/editor";
 import { aspectRatios, type AspectRatio } from "../config/export";
+import { syntaxThemes, type SyntaxTheme } from "../config/themes";
 import { palettes } from "../palettes";
 import { RangeControl } from "./range-control";
 
@@ -22,6 +23,7 @@ type AppearancePanelProps = {
   paletteIndex: number;
   radius: number;
   titleBar: boolean;
+  syntaxTheme: SyntaxTheme;
   onAspectRatioChange: (value: AspectRatio) => void;
   onFontSizeChange: (value: number) => void;
   onLanguageChange: (value: string) => void;
@@ -30,6 +32,8 @@ type AppearancePanelProps = {
   onPaletteChange: (value: number) => void;
   onRadiusChange: (value: number) => void;
   onTitleBarChange: (value: boolean) => void;
+  onThemeChange: (value: SyntaxTheme) => void;
+  onThemePreview: (value: SyntaxTheme | null) => void;
 };
 
 export function AppearancePanel(props: AppearancePanelProps) {
@@ -57,6 +61,34 @@ export function AppearancePanel(props: AppearancePanelProps) {
             {languages.map((item) => (
               <SelectItem key={item} value={item}>
                 {item}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="setting-group">
+        <label className="setting-label" htmlFor="theme-select">
+          Syntax theme
+        </label>
+        <Select
+          value={props.syntaxTheme}
+          onValueChange={(value) => props.onThemeChange(value as SyntaxTheme)}
+          onOpenChange={(open) => {
+            if (!open) props.onThemePreview(null);
+          }}
+        >
+          <SelectTrigger id="theme-select" className="select-trigger">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent onPointerLeave={() => props.onThemePreview(null)}>
+            {syntaxThemes.map((theme) => (
+              <SelectItem
+                key={theme.value}
+                value={theme.value}
+                onPointerEnter={() => props.onThemePreview(theme.value)}
+                onFocus={() => props.onThemePreview(theme.value)}
+              >
+                {theme.label}
               </SelectItem>
             ))}
           </SelectContent>
