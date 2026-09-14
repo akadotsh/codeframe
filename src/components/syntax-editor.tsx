@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { languageConfig, type Language } from "../config/editor";
-import { highlightTheme, loadHighlighter } from "../lib/highlighting";
+import { getHighlighter, highlightTheme } from "../lib/highlighting";
 
 export function SyntaxEditor({
   code,
@@ -18,7 +18,7 @@ export function SyntaxEditor({
   useEffect(() => {
     let current = true;
     const timeout = window.setTimeout(async () => {
-      const highlighter = await loadHighlighter();
+      const highlighter = await getHighlighter(languageConfig[language].highlighter);
       const html = highlighter.codeToHtml(code || " ", {
         lang: languageConfig[language].highlighter,
         theme: highlightTheme,

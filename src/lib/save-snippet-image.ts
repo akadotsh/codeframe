@@ -6,7 +6,7 @@ import {
   type PreviewMode,
 } from "../config/export";
 import type { Palette } from "../palettes";
-import { highlightTheme, loadHighlighter } from "./highlighting";
+import { getHighlighter, highlightTheme } from "./highlighting";
 
 type SaveSnippetImageOptions = {
   code: string;
@@ -79,7 +79,7 @@ export async function saveSnippetImage(options: SaveSnippetImageOptions) {
     titleBar,
   } = options;
   await document.fonts.ready;
-  const highlighter = await loadHighlighter();
+  const highlighter = await getHighlighter(languageConfig[language].highlighter);
   const highlightedLines = highlighter.codeToTokens(code, {
     lang: languageConfig[language].highlighter,
     theme: highlightTheme,
