@@ -6,6 +6,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { Braces } from "lucide-react";
+import * as stylex from "@stylexjs/stylex";
 import { AppearancePanel } from "./components/appearance-panel";
 import { EditorPreview } from "./components/editor-preview";
 import { SaveControl } from "./components/save-control";
@@ -21,6 +22,7 @@ import {
 import type { SyntaxTheme } from "./config/themes";
 import { saveSnippetImage } from "./lib/save-snippet-image";
 import { palettes } from "./palettes";
+import { appStyles } from "./styles/app.stylex";
 
 export function App() {
   const [paletteIndex, setPaletteIndex] = useState(0);
@@ -134,15 +136,15 @@ export function App() {
   };
 
   return (
-    <main className="app-shell" data-resizing={resizing}>
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="Vignette home">
-          <span className="brand-mark">
+    <main {...stylex.props(appStyles.shell, resizing && appStyles.resizing)}>
+      <header {...stylex.props(appStyles.topbar)}>
+        <a {...stylex.props(appStyles.brand)} href="/" aria-label="Vignette home">
+          <span {...stylex.props(appStyles.brandMark)}>
             <Braces size={18} strokeWidth={2.2} />
           </span>
           <span>Vignette</span>
         </a>
-        <div className="topbar-actions">
+        <div {...stylex.props(appStyles.topbarActions)}>
           <SaveControl
             format={imageFormat}
             saved={saved}
@@ -152,7 +154,7 @@ export function App() {
         </div>
       </header>
 
-      <section className="workspace">
+      <section {...stylex.props(appStyles.workspace)}>
         <EditorPreview
           aspectRatio={selectedAspectRatio.ratio}
           code={code}
