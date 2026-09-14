@@ -5,7 +5,7 @@ import {
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { Braces, Check, Copy, RotateCcw } from "lucide-react";
+import { Check, Copy, RotateCcw } from "lucide-react";
 import * as stylex from "@stylexjs/stylex";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { AppearancePanel } from "./components/appearance-panel";
@@ -160,11 +160,8 @@ export function App() {
   return (
     <main {...stylex.props(appStyles.shell, resizing && appStyles.resizing)}>
       <header {...stylex.props(appStyles.topbar)}>
-        <a {...stylex.props(appStyles.brand)} href="/" aria-label="Vignette home">
-          <span {...stylex.props(appStyles.brandMark)}>
-            <Braces size={18} strokeWidth={2.2} />
-          </span>
-          <span>Vignette</span>
+        <a {...stylex.props(appStyles.brand)} href="/" aria-label="Code Frame home">
+          <span>Code Frame</span>
         </a>
         <div {...stylex.props(appStyles.topbarActions)}>
           <button

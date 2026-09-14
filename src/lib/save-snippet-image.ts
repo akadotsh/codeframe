@@ -141,7 +141,7 @@ export async function saveSnippetImage(options: SaveSnippetImageOptions) {
         if (blob) {
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
-          link.download = `${title.replace(/\.[^.]+$/, "") || "vignette"}.${format.extension}`;
+          link.download = `${title.replace(/\.[^.]+$/, "") || "code-frame"}.${format.extension}`;
           link.click();
           URL.revokeObjectURL(link.href);
         }
