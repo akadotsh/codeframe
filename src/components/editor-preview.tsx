@@ -3,6 +3,7 @@ import type { Language } from "../config/editor";
 import type { FrameMetrics, PreviewMode } from "../config/export";
 import type { SyntaxTheme } from "../config/themes";
 import type { Palette } from "../palettes";
+import { useSyntaxThemeColors } from "../hooks/use-syntax-theme-colors";
 import { FrameResizeHandle } from "./frame-resize-handle";
 import { PreviewModeSelector } from "./preview-mode-selector";
 import { SyntaxEditor } from "./syntax-editor";
@@ -35,6 +36,10 @@ type EditorPreviewProps = {
 export function EditorPreview(props: EditorPreviewProps) {
   const { frameMetrics, palette } = props;
   const lines = props.code.split("\n");
+  const themeColors = useSyntaxThemeColors(props.syntaxTheme, {
+    background: palette.card,
+    foreground: palette.text,
+  });
 
   return (
     <div className="canvas-area">
@@ -78,8 +83,8 @@ export function EditorPreview(props: EditorPreviewProps) {
             className="code-window"
             style={{
               borderRadius: `${props.radius}px`,
-              background: palette.card,
-              color: palette.text,
+              background: themeColors.background,
+              color: themeColors.foreground,
               height: props.aspectRatio ? "100%" : undefined,
             }}
           >

@@ -83,6 +83,7 @@ export async function saveSnippetImage(options: SaveSnippetImageOptions) {
   } = options;
   await document.fonts.ready;
   const highlighter = await getHighlighter(languageConfig[language].highlighter, syntaxTheme);
+  const theme = highlighter.getTheme(syntaxTheme);
   const highlightedLines = highlighter.codeToTokens(code, {
     lang: languageConfig[language].highlighter,
     theme: syntaxTheme,
@@ -108,7 +109,7 @@ export async function saveSnippetImage(options: SaveSnippetImageOptions) {
   context.shadowBlur = 44;
   context.shadowOffsetY = 22;
   roundedRect(context, x, y, cardWidth, cardHeight, radius);
-  context.fillStyle = palette.card;
+  context.fillStyle = theme.bg;
   context.fill();
   context.restore();
   context.save();
@@ -127,7 +128,7 @@ export async function saveSnippetImage(options: SaveSnippetImageOptions) {
     }
     let tokenX = x + (lineNumbers ? 94 : 46);
     tokens.forEach((token) => {
-      context.fillStyle = token.color || palette.text;
+      context.fillStyle = token.color || theme.fg;
       context.fillText(token.content || " ", tokenX, baseline);
       tokenX += context.measureText(token.content).width;
     });
