@@ -1,4 +1,4 @@
-# Code Frame MVP
+# Code Frame
 
 ## Goals
 
