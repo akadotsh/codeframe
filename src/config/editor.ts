@@ -13,7 +13,7 @@ const defineLanguage = (
 ): LanguageDefinition => ({ extension, highlighter, sample });
 
 export const languageConfig = {
-  Cedar: defineLanguage("cedar", "text", `permit(principal, action, resource);`),
+  Cedar: defineLanguage("cedar", "cedar", `permit(principal, action, resource);`),
   Bash: defineLanguage("sh", "bash", `#!/usr/bin/env bash\necho "Hello from Vignette"`),
   Astro: defineLanguage("astro", "astro", `---\nconst title = "Hello";\n---\n<h1>{title}</h1>`),
   "C++": defineLanguage(

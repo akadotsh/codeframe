@@ -1,6 +1,7 @@
 export const languageLoaders = {
   astro: () => import("@shikijs/langs/astro"),
   bash: () => import("@shikijs/langs/bash"),
+  cedar: () => import("./cedar-language"),
   clojure: () => import("@shikijs/langs/clojure"),
   console: () => import("@shikijs/langs/console"),
   cpp: () => import("@shikijs/langs/cpp"),
