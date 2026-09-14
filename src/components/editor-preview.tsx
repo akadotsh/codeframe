@@ -1,9 +1,11 @@
 import type { KeyboardEvent, PointerEvent, RefObject } from "react";
+import * as stylex from "@stylexjs/stylex";
 import type { Language } from "../config/editor";
 import type { FrameMetrics, PreviewMode } from "../config/export";
 import type { SyntaxTheme } from "../config/themes";
 import type { Palette } from "../palettes";
 import { useSyntaxThemeColors } from "../hooks/use-syntax-theme-colors";
+import { previewStyles } from "../styles/preview.stylex";
 import { FrameResizeHandle } from "./frame-resize-handle";
 import { SyntaxEditor } from "./syntax-editor";
 
@@ -40,11 +42,11 @@ export function EditorPreview(props: EditorPreviewProps) {
   });
 
   return (
-    <div className="canvas-area">
-      <div className="preview-wrap">
+    <div {...stylex.props(previewStyles.canvas)}>
+      <div {...stylex.props(previewStyles.previewWrap)}>
         <div
           ref={props.previewStageRef}
-          className="preview-stage"
+          {...stylex.props(previewStyles.stage)}
           style={{
             width: `${Math.round(frameMetrics.width * 0.72)}px`,
             background: `linear-gradient(135deg, ${palette.colors[0]}, ${palette.colors[1]})`,
@@ -64,15 +66,18 @@ export function EditorPreview(props: EditorPreviewProps) {
             />
           ))}
           <output
-            className="frame-width-indicator"
+            {...stylex.props(
+              previewStyles.indicator,
+              props.resizing && previewStyles.indicatorVisible,
+            )}
             data-visible={props.resizing}
             aria-hidden={!props.resizing}
           >
             {frameMetrics.width}px
           </output>
-          <div className="grain" aria-hidden="true" />
+          <div {...stylex.props(previewStyles.grain)} aria-hidden="true" />
           <div
-            className="code-window"
+            {...stylex.props(previewStyles.codeWindow)}
             style={{
               borderRadius: `${props.radius}px`,
               background: themeColors.background,
@@ -81,35 +86,51 @@ export function EditorPreview(props: EditorPreviewProps) {
             }}
           >
             <div
-              className={`window-bar-reveal${props.titleBar ? "" : " hidden"}`}
+              {...stylex.props(
+                previewStyles.windowReveal,
+                !props.titleBar && previewStyles.windowRevealHidden,
+              )}
               aria-hidden={!props.titleBar}
             >
-              <div className="window-bar">
-                <div className="window-side">
+              <div
+                {...stylex.props(
+                  previewStyles.windowBar,
+                  !props.titleBar && previewStyles.windowBarHidden,
+                )}
+              >
+                <div {...stylex.props(previewStyles.windowSide)}>
                   {props.mode === "window" ? (
-                    <span className="traffic">
-                      <i />
-                      <i />
-                      <i />
+                    <span {...stylex.props(previewStyles.traffic)}>
+                      <i {...stylex.props(previewStyles.trafficLight, previewStyles.trafficRed)} />
+                      <i
+                        {...stylex.props(previewStyles.trafficLight, previewStyles.trafficYellow)}
+                      />
+                      <i
+                        {...stylex.props(previewStyles.trafficLight, previewStyles.trafficGreen)}
+                      />
                     </span>
                   ) : (
-                    <span className="terminal-glyph" style={{ color: palette.accent }}>
+                    <span
+                      {...stylex.props(previewStyles.terminalGlyph)}
+                      style={{ color: palette.accent }}
+                    >
                       &gt;_
                     </span>
                   )}
                 </div>
                 <input
+                  {...stylex.props(previewStyles.titleInput)}
                   value={props.title}
                   onChange={(event) => props.onTitleChange(event.target.value)}
                   aria-label="Snippet title"
                   tabIndex={props.titleBar ? 0 : -1}
                 />
-                <span className="language-pill">{props.language}</span>
+                <span {...stylex.props(previewStyles.language)}>{props.language}</span>
               </div>
             </div>
-            <div className="editor-shell" style={{ fontSize: `${props.fontSize}px` }}>
+            <div {...stylex.props(previewStyles.editorShell)} style={{ fontSize: props.fontSize }}>
               {props.lineNumbers && (
-                <pre className="line-numbers" style={{ color: palette.muted }}>
+                <pre {...stylex.props(previewStyles.lineNumbers)} style={{ color: palette.muted }}>
                   {lines.map((_, index) => `${index + 1}\n`)}
                 </pre>
               )}

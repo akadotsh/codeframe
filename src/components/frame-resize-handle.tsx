@@ -1,5 +1,7 @@
 import type { KeyboardEvent, PointerEvent as ReactPointerEvent } from "react";
+import * as stylex from "@stylexjs/stylex";
 import { maxFrameWidth, minFrameWidth } from "../config/export";
+import { resizeHandleStyles } from "../styles/preview.stylex";
 
 export function FrameResizeHandle({
   side,
@@ -18,7 +20,7 @@ export function FrameResizeHandle({
 }) {
   return (
     <button
-      className={`frame-resize-handle ${side}`}
+      {...stylex.props(resizeHandleStyles.handle, resizeHandleStyles[side])}
       aria-label={`Resize frame from ${side} edge`}
       aria-valuemin={minFrameWidth}
       aria-valuemax={maxFrameWidth}
