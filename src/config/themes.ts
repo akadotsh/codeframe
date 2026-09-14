@@ -7,6 +7,16 @@ export const syntaxThemes = [
   { value: "tokyo-night", label: "Tokyo Night" },
   { value: "catppuccin-mocha", label: "Catppuccin Mocha" },
   { value: "rose-pine", label: "Rosé Pine" },
+  { value: "github-light-default", label: "GitHub Light" },
+  { value: "light-plus", label: "VS Code Light+" },
+  { value: "horizon", label: "Horizon" },
+  { value: "horizon-bright", label: "Horizon Bright" },
+  { value: "ayu-light", label: "Ayu Light" },
+  { value: "catppuccin-latte", label: "Catppuccin Latte" },
+  { value: "rose-pine-dawn", label: "Rosé Pine Dawn" },
+  { value: "solarized-light", label: "Solarized Light" },
+  { value: "material-theme-ocean", label: "Material Ocean" },
+  { value: "vitesse-light", label: "Vitesse Light" },
 ] as const;
 
 export type SyntaxTheme = (typeof syntaxThemes)[number]["value"];
@@ -20,4 +30,14 @@ export const themeLoaders = {
   "tokyo-night": () => import("@shikijs/themes/tokyo-night"),
   "catppuccin-mocha": () => import("@shikijs/themes/catppuccin-mocha"),
   "rose-pine": () => import("@shikijs/themes/rose-pine"),
+  "github-light-default": () => import("@shikijs/themes/github-light-default"),
+  "light-plus": () => import("@shikijs/themes/light-plus"),
+  horizon: () => import("@shikijs/themes/horizon"),
+  "horizon-bright": () => import("@shikijs/themes/horizon-bright"),
+  "ayu-light": () => import("@shikijs/themes/ayu-light"),
+  "catppuccin-latte": () => import("@shikijs/themes/catppuccin-latte"),
+  "rose-pine-dawn": () => import("@shikijs/themes/rose-pine-dawn"),
+  "solarized-light": () => import("@shikijs/themes/solarized-light"),
+  "material-theme-ocean": () => import("@shikijs/themes/material-theme-ocean"),
+  "vitesse-light": () => import("@shikijs/themes/vitesse-light"),
 } satisfies Record<SyntaxTheme, () => Promise<unknown>>;

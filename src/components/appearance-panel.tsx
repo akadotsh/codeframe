@@ -10,9 +10,10 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { languages, type Language } from "../config/editor";
 import { aspectRatios, type AspectRatio } from "../config/export";
-import { syntaxThemes, type SyntaxTheme } from "../config/themes";
+import type { SyntaxTheme } from "../config/themes";
 import { palettes } from "../palettes";
 import { RangeControl } from "./range-control";
+import { SyntaxThemeSelect } from "./syntax-theme-select";
 
 type AppearancePanelProps = {
   aspectRatio: AspectRatio;
@@ -70,29 +71,11 @@ export function AppearancePanel(props: AppearancePanelProps) {
         <label className="setting-label" htmlFor="theme-select">
           Syntax theme
         </label>
-        <Select
+        <SyntaxThemeSelect
           value={props.syntaxTheme}
-          onValueChange={(value) => props.onThemeChange(value as SyntaxTheme)}
-          onOpenChange={(open) => {
-            if (!open) props.onThemePreview(null);
-          }}
-        >
-          <SelectTrigger id="theme-select" className="select-trigger">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent onPointerLeave={() => props.onThemePreview(null)}>
-            {syntaxThemes.map((theme) => (
-              <SelectItem
-                key={theme.value}
-                value={theme.value}
-                onPointerEnter={() => props.onThemePreview(theme.value)}
-                onFocus={() => props.onThemePreview(theme.value)}
-              >
-                {theme.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={props.onThemeChange}
+          onPreview={props.onThemePreview}
+        />
       </div>
       <div className="setting-group">
         <div className="setting-label">
