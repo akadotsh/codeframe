@@ -2,6 +2,7 @@ import * as stylex from "@stylexjs/stylex";
 
 export const previewStyles = stylex.create({
   canvas: {
+    boxSizing: "border-box",
     minWidth: 0,
     padding: {
       default: "20px 22px 22px",
@@ -30,6 +31,7 @@ export const previewStyles = stylex.create({
     overflowX: { "@media (max-width: 820px)": "auto" },
   },
   stage: {
+    boxSizing: "border-box",
     maxWidth: "100%",
     minWidth: 520,
     position: "relative",
@@ -117,6 +119,7 @@ export const previewStyles = stylex.create({
   },
   windowRevealHidden: { gridTemplateRows: "0px" },
   windowBar: {
+    boxSizing: "border-box",
     height: 64,
     position: "relative",
     display: "grid",
@@ -192,6 +195,8 @@ export const previewStyles = stylex.create({
 
 export const resizeHandleStyles = stylex.create({
   handle: {
+    boxSizing: "border-box",
+    appearance: "none",
     width: 18,
     height: 92,
     position: "absolute",

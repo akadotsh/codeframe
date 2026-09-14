@@ -10,6 +10,8 @@ const menuIn = stylex.keyframes({
 
 const styles = stylex.create({
   trigger: {
+    boxSizing: "border-box",
+    appearance: "none",
     width: "100%",
     height: 36,
     display: "flex",
@@ -22,6 +24,7 @@ const styles = stylex.create({
     borderRadius: 12,
     backgroundImage:
       "linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.035))",
+    backgroundColor: "transparent",
     color: "#f4f2f8",
     boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 8px 22px rgba(0, 0, 0, 0.12)",
     cursor: "pointer",
@@ -41,6 +44,7 @@ const styles = stylex.create({
   },
   chevronOpen: { transform: "rotate(180deg)" },
   menu: {
+    boxSizing: "border-box",
     zIndex: 50,
     width: "var(--radix-popover-trigger-width)",
     padding: 6,
@@ -62,6 +66,7 @@ const styles = stylex.create({
     },
   },
   search: {
+    boxSizing: "border-box",
     height: 34,
     display: "flex",
     alignItems: "center",
@@ -88,6 +93,7 @@ const styles = stylex.create({
   },
   options: { maxHeight: 264, overflowY: "auto" },
   option: {
+    appearance: "none",
     width: "100%",
     height: 34,
     display: "flex",

@@ -24,6 +24,7 @@ const styles = stylex.create({
   },
   range: { position: "absolute", height: "100%", backgroundColor: "#9186d8" },
   thumb: {
+    boxSizing: "border-box",
     width: 15,
     height: 15,
     display: "block",

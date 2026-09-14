@@ -6,7 +6,6 @@ import { router } from "./router";
 import { globalStyles } from "./styles/global.stylex";
 import "@fontsource-variable/geist";
 import "@fontsource-variable/geist-mono";
-import "./styles.css";
 
 const appRoot = document.getElementById("app")!;
 document.documentElement.className = stylex.props(globalStyles.document).className ?? "";

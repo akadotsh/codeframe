@@ -8,6 +8,7 @@ export const globalStyles = stylex.create({
     backgroundColor: "#0c0c11",
     color: "#f2f1f4",
     fontFamily: '"Geist Variable", ui-sans-serif, system-ui, sans-serif',
+    lineHeight: 1.5,
   },
   body: {
     minWidth: 320,

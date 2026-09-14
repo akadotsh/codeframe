@@ -6,6 +6,8 @@ import * as stylex from "@stylexjs/stylex";
 
 const styles = stylex.create({
   root: {
+    boxSizing: "border-box",
+    appearance: "none",
     width: 32,
     height: 18,
     display: "inline-flex",
@@ -31,6 +33,7 @@ const styles = stylex.create({
   checked: { backgroundColor: "#9186d8" },
   small: { width: 24, height: 14 },
   thumb: {
+    boxSizing: "border-box",
     width: 16,
     height: 16,
     display: "block",

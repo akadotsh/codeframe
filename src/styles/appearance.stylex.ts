@@ -7,6 +7,7 @@ const paletteIn = stylex.keyframes({
 
 export const appearanceStyles = stylex.create({
   panel: {
+    boxSizing: "border-box",
     position: "relative",
     borderWidth: 1,
     borderStyle: "solid",
@@ -61,6 +62,8 @@ export const appearanceStyles = stylex.create({
   },
   labelValue: { color: "#73737f", fontSize: 12, fontWeight: 500 },
   paletteExpand: {
+    boxSizing: "border-box",
+    appearance: "none",
     display: "flex",
     alignItems: "center",
     gap: 4,
@@ -101,6 +104,8 @@ export const appearanceStyles = stylex.create({
   paletteExpandIconOpen: { transform: "rotate(180deg)" },
   paletteGrid: { display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 },
   palette: {
+    boxSizing: "border-box",
+    appearance: "none",
     height: 36,
     display: "grid",
     placeItems: "center",
@@ -109,6 +114,7 @@ export const appearanceStyles = stylex.create({
     borderColor: "transparent",
     borderRadius: 11,
     cursor: "pointer",
+    color: "inherit",
     boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.11)",
     transition: "transform 140ms cubic-bezier(0.23, 1, 0.32, 1), filter 150ms ease",
     ":hover": { filter: { "@media (hover: hover) and (pointer: fine)": "brightness(1.08)" } },
@@ -141,6 +147,8 @@ export const appearanceStyles = stylex.create({
   },
   ratioGrid: { display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: 8 },
   ratio: {
+    boxSizing: "border-box",
+    appearance: "none",
     height: 38,
     display: "grid",
     placeItems: "center",

@@ -14,6 +14,7 @@ export const appStyles = stylex.create({
     userSelect: "none",
   },
   topbar: {
+    boxSizing: "border-box",
     height: {
       default: 68,
       "@media (max-width: 640px)": 62,
@@ -45,6 +46,7 @@ export const appStyles = stylex.create({
     letterSpacing: "-0.018em",
   },
   brandMark: {
+    boxSizing: "border-box",
     width: 31,
     height: 31,
     display: "grid",
@@ -63,6 +65,7 @@ export const appStyles = stylex.create({
     alignItems: "center",
   },
   workspace: {
+    boxSizing: "border-box",
     minHeight: {
       default: "calc(100vh - 68px)",
       "@media (max-width: 640px)": "calc(100vh - 62px)",
