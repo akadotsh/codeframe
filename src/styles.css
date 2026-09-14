@@ -777,7 +777,6 @@ button {
 
 button:focus-visible,
 input:focus-visible,
-textarea:focus-visible,
 [data-slot="select-trigger"]:focus-visible {
   outline: 2px solid rgba(178, 168, 238, 0.85);
   outline-offset: 3px;
