@@ -1,19 +1,14 @@
 import { useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { languages, type Language } from "../config/editor";
 import { aspectRatios, type AspectRatio } from "../config/export";
-import type { SyntaxTheme } from "../config/themes";
+import { syntaxThemes, type SyntaxTheme } from "../config/themes";
 import { palettes } from "../palettes";
 import { RangeControl } from "./range-control";
-import { SyntaxThemeSelect } from "./syntax-theme-select";
+import { SearchableSelect } from "./searchable-select";
+
+const languageOptions = languages.map((language) => ({ label: language, value: language }));
 
 type AppearancePanelProps = {
   aspectRatio: AspectRatio;
@@ -27,7 +22,7 @@ type AppearancePanelProps = {
   syntaxTheme: SyntaxTheme;
   onAspectRatioChange: (value: AspectRatio) => void;
   onFontSizeChange: (value: number) => void;
-  onLanguageChange: (value: string) => void;
+  onLanguageChange: (value: Language) => void;
   onLineNumbersChange: (value: boolean) => void;
   onPaddingChange: (value: number) => void;
   onPaletteChange: (value: number) => void;
@@ -54,24 +49,24 @@ export function AppearancePanel(props: AppearancePanelProps) {
         <label className="setting-label" htmlFor="language-select">
           Language
         </label>
-        <Select value={props.language} onValueChange={props.onLanguageChange}>
-          <SelectTrigger id="language-select" className="select-trigger">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {languages.map((item) => (
-              <SelectItem key={item} value={item}>
-                {item}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <SearchableSelect
+          id="language-select"
+          options={languageOptions}
+          searchLabel="Search programming languages"
+          searchPlaceholder="Search languages…"
+          value={props.language}
+          onChange={props.onLanguageChange}
+        />
       </div>
       <div className="setting-group">
         <label className="setting-label" htmlFor="theme-select">
-          Syntax theme
+          Syntax
         </label>
-        <SyntaxThemeSelect
+        <SearchableSelect
+          id="theme-select"
+          options={syntaxThemes}
+          searchLabel="Search syntax themes"
+          searchPlaceholder="Search themes…"
           value={props.syntaxTheme}
           onChange={props.onThemeChange}
           onPreview={props.onThemePreview}

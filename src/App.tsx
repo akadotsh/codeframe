@@ -106,8 +106,7 @@ export function App() {
     );
   };
 
-  const chooseLanguage = (next: string) => {
-    const nextLanguage = next as Language;
+  const chooseLanguage = (nextLanguage: Language) => {
     const previousSample = languageConfig[language].sample;
     setLanguage(nextLanguage);
     setTitle(`hello-world.${languageConfig[nextLanguage].extension}`);
