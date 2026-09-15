@@ -9,6 +9,7 @@
 
 ## Checklist
 
+- [x] Workspace architecture with the web app in `packages/web`
 - [x] TanStack Router app foundation
 - [x] Editable code canvas with window and terminal modes
 - [x] Language, palette, spacing, radius, and type controls
