@@ -9,7 +9,7 @@ and MCP packages can be added alongside it when needed.
 
 ```text
 packages/
-└── web/    # TanStack Router application
+└── web/    # Web app
 ```
 
 ## Development
