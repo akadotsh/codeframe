@@ -1,4 +1,5 @@
 mod route;
+mod snippet;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {

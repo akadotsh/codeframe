@@ -25,7 +25,19 @@ Run the API separately at `http://localhost:8080`:
 npm run dev:api
 ```
 
-Its initial health check is available at `GET /health`.
+The API exposes:
+
+- `GET /health` to check availability
+- `POST /api/snippets` to create a code-frame snippet
+- `GET /api/snippets/{id}` to retrieve a created snippet
+
+For example:
+
+```bash
+curl http://localhost:8080/api/snippets \
+  --header 'content-type: application/json' \
+  --data '{"code":"fn main() {}","language":"Rust","title":"main.rs"}'
+```
 
 Useful checks:
 
