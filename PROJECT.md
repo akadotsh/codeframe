@@ -10,6 +10,7 @@
 ## Checklist
 
 - [x] Workspace architecture with the web app in `packages/web`
+- [x] Rust API foundation with a health-check route
 - [x] TanStack Router app foundation
 - [x] Editable code canvas with window and terminal modes
 - [x] Language, palette, spacing, radius, and type controls

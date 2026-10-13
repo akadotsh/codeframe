@@ -6,14 +6,17 @@
   "workspaces": ["packages/*"],
   "scripts": {
     "dev": "npm run dev --workspace @code-frame/web",
+    "dev:api": "cargo run --manifest-path packages/api/Cargo.toml",
     "build": "npm run build --workspaces --if-present",
+    "build:api": "cargo build --manifest-path packages/api/Cargo.toml",
     "preview": "npm run preview --workspace @code-frame/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "lint:fix": "npm run lint:fix --workspaces --if-present",
     "format": "npm run format --workspaces --if-present",
     "format:check": "npm run format:check --workspaces --if-present",
-    "check": "npm run check --workspaces --if-present"
+    "check": "npm run check --workspaces --if-present && npm run check:api",
+    "check:api": "cargo fmt --manifest-path packages/api/Cargo.toml --check && cargo test --manifest-path packages/api/Cargo.toml"
   },
   "engines": {
     "node": ">=22.13.0"
