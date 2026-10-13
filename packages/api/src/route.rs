@@ -10,12 +10,12 @@ use tower_http::{
 
 use crate::snippet::{SnippetStore, create_snippet, get_snippet};
 
-pub fn create_router() -> Router {
+pub fn create_router(store: SnippetStore) -> Router {
     Router::new()
         .route("/health", get(|| async { "ok" }))
         .route("/api/snippets", post(create_snippet))
         .route("/api/snippets/{id}", get(get_snippet))
-        .with_state(SnippetStore::default())
+        .with_state(store)
         .layer(
             CorsLayer::new()
                 .allow_methods([Method::GET, Method::POST])
@@ -28,6 +28,7 @@ pub fn create_router() -> Router {
 #[cfg(test)]
 mod tests {
     use axum::{
+        Router,
         body::{Body, to_bytes},
         http::{Request, StatusCode, header},
     };
@@ -35,10 +36,15 @@ mod tests {
     use tower::ServiceExt;
 
     use super::create_router;
+    use crate::snippet::SnippetStore;
+
+    fn app() -> Router {
+        create_router(SnippetStore::memory())
+    }
 
     #[tokio::test]
     async fn health_check_is_available() {
-        let response = create_router()
+        let response = app()
             .oneshot(Request::get("/health").body(Body::empty()).unwrap())
             .await
             .unwrap();
@@ -48,7 +54,7 @@ mod tests {
 
     #[tokio::test]
     async fn snippets_can_be_created_and_retrieved() {
-        let app = create_router();
+        let app = app();
         let response = app
             .clone()
             .oneshot(
@@ -72,6 +78,7 @@ mod tests {
             serde_json::from_slice(&to_bytes(response.into_body(), usize::MAX).await.unwrap())
                 .unwrap();
         let id = body["id"].as_str().unwrap();
+        assert_eq!(body["url"], format!("http://localhost:5173/s/{id}"));
 
         let response = app
             .oneshot(
@@ -87,7 +94,7 @@ mod tests {
 
     #[tokio::test]
     async fn empty_code_is_rejected() {
-        let response = create_router()
+        let response = app()
             .oneshot(
                 Request::post("/api/snippets")
                     .header(header::CONTENT_TYPE, "application/json")

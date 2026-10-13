@@ -1,4 +1,6 @@
+#[cfg(test)]
 use std::{collections::HashMap, sync::Arc};
+use std::{env, io};
 
 use axum::{
     Json,
@@ -6,20 +8,39 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
+#[cfg(test)]
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
 const MAX_CODE_BYTES: usize = 100_000;
 const MAX_TITLE_CHARS: usize = 200;
+const SNIPPET_TTL_SECONDS: u64 = 60 * 60 * 24 * 90;
 
-#[derive(Clone, Default)]
-pub struct SnippetStore(Arc<RwLock<HashMap<Uuid, Snippet>>>);
+#[derive(Clone)]
+pub struct SnippetStore {
+    backend: Backend,
+    public_web_url: String,
+}
 
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone)]
+enum Backend {
+    Upstash(Upstash),
+    #[cfg(test)]
+    Memory(Arc<RwLock<HashMap<String, Snippet>>>),
+}
+
+#[derive(Clone)]
+struct Upstash {
+    client: reqwest::Client,
+    token: String,
+    url: String,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct Snippet {
-    id: Uuid,
+    id: String,
     code: String,
     title: String,
     language: String,
@@ -69,13 +90,177 @@ pub struct CreateSnippet {
 }
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct CreatedSnippet {
+    #[serde(flatten)]
+    snippet: Snippet,
+    url: String,
+    expires_in: u64,
+}
+
+#[derive(Debug, Serialize)]
 pub(crate) struct ApiError {
-    error: &'static str,
+    #[serde(skip)]
+    status: StatusCode,
+    error: String,
+}
+
+#[derive(Deserialize)]
+struct UpstashResponse<T> {
+    result: T,
+}
+
+impl SnippetStore {
+    pub fn from_env() -> Result<Self, io::Error> {
+        let url = required_env("UPSTASH_REDIS_REST_URL")?;
+        let token = required_env("UPSTASH_REDIS_REST_TOKEN")?;
+        let public_web_url = env::var("PUBLIC_WEB_URL")
+            .unwrap_or_else(|_| "http://localhost:5173".into())
+            .trim_end_matches('/')
+            .to_owned();
+
+        Ok(Self {
+            backend: Backend::Upstash(Upstash {
+                client: reqwest::Client::new(),
+                token,
+                url: url.trim_end_matches('/').to_owned(),
+            }),
+            public_web_url,
+        })
+    }
+
+    #[cfg(test)]
+    pub fn memory() -> Self {
+        Self {
+            backend: Backend::Memory(Arc::default()),
+            public_web_url: "http://localhost:5173".into(),
+        }
+    }
+
+    async fn create(&self, input: CreateSnippet) -> Result<CreatedSnippet, ApiError> {
+        let mut snippet = Snippet {
+            id: String::new(),
+            code: input.code,
+            title: input.title,
+            language: input.language,
+            mode: input.mode,
+            syntax_theme: input.syntax_theme,
+            aspect_ratio: input.aspect_ratio,
+            image_format: input.image_format,
+            frame_width: input.frame_width,
+            font_size: input.font_size,
+            padding: input.padding,
+            radius: input.radius,
+            palette_index: input.palette_index,
+            line_numbers: input.line_numbers,
+            title_bar: input.title_bar,
+        };
+
+        for _ in 0..3 {
+            snippet.id = short_id();
+
+            if self.put(&snippet).await? {
+                return Ok(CreatedSnippet {
+                    url: format!("{}/s/{}", self.public_web_url, snippet.id),
+                    snippet,
+                    expires_in: SNIPPET_TTL_SECONDS,
+                });
+            }
+        }
+
+        Err(ApiError::unavailable())
+    }
+
+    async fn get(&self, id: &str) -> Result<Option<Snippet>, ApiError> {
+        if id.len() != 16 || !id.bytes().all(|byte| byte.is_ascii_hexdigit()) {
+            return Ok(None);
+        }
+
+        match &self.backend {
+            Backend::Upstash(upstash) => {
+                let key = storage_key(id);
+                let value: Option<String> = upstash.command(&["GET", &key]).await?;
+                value
+                    .map(|value| serde_json::from_str(&value).map_err(|_| ApiError::unavailable()))
+                    .transpose()
+            }
+            #[cfg(test)]
+            Backend::Memory(snippets) => Ok(snippets.read().await.get(id).cloned()),
+        }
+    }
+
+    async fn put(&self, snippet: &Snippet) -> Result<bool, ApiError> {
+        match &self.backend {
+            Backend::Upstash(upstash) => {
+                let value = serde_json::to_string(snippet).map_err(|_| ApiError::unavailable())?;
+                let ttl = SNIPPET_TTL_SECONDS.to_string();
+                let key = storage_key(&snippet.id);
+                let result: Option<String> = upstash
+                    .command(&["SET", &key, &value, "EX", &ttl, "NX"])
+                    .await?;
+                Ok(result.as_deref() == Some("OK"))
+            }
+            #[cfg(test)]
+            Backend::Memory(snippets) => {
+                let mut snippets = snippets.write().await;
+                if snippets.contains_key(&snippet.id) {
+                    return Ok(false);
+                }
+                snippets.insert(snippet.id.clone(), snippet.clone());
+                Ok(true)
+            }
+        }
+    }
+}
+
+impl Upstash {
+    async fn command<T>(&self, command: &[&str]) -> Result<T, ApiError>
+    where
+        T: DeserializeOwned,
+    {
+        let response = self
+            .client
+            .post(&self.url)
+            .bearer_auth(&self.token)
+            .json(&command)
+            .send()
+            .await
+            .and_then(reqwest::Response::error_for_status)
+            .map_err(|error| {
+                eprintln!("Upstash request failed: {error}");
+                ApiError::unavailable()
+            })?;
+
+        response
+            .json::<UpstashResponse<T>>()
+            .await
+            .map(|body| body.result)
+            .map_err(|error| {
+                eprintln!("Invalid Upstash response: {error}");
+                ApiError::unavailable()
+            })
+    }
 }
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
-        (StatusCode::UNPROCESSABLE_ENTITY, Json(self)).into_response()
+        (self.status, Json(self)).into_response()
+    }
+}
+
+impl ApiError {
+    fn invalid(error: &'static str) -> Self {
+        Self {
+            status: StatusCode::UNPROCESSABLE_ENTITY,
+            error: error.into(),
+        }
+    }
+
+    fn unavailable() -> Self {
+        Self {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            error: "snippet storage is temporarily unavailable".into(),
+        }
     }
 }
 
@@ -84,84 +269,50 @@ pub async fn create_snippet(
     Json(input): Json<CreateSnippet>,
 ) -> Result<impl IntoResponse, ApiError> {
     input.validate()?;
-
-    let snippet = Snippet {
-        id: Uuid::new_v4(),
-        code: input.code,
-        title: input.title,
-        language: input.language,
-        mode: input.mode,
-        syntax_theme: input.syntax_theme,
-        aspect_ratio: input.aspect_ratio,
-        image_format: input.image_format,
-        frame_width: input.frame_width,
-        font_size: input.font_size,
-        padding: input.padding,
-        radius: input.radius,
-        palette_index: input.palette_index,
-        line_numbers: input.line_numbers,
-        title_bar: input.title_bar,
-    };
-
-    store.0.write().await.insert(snippet.id, snippet.clone());
-    Ok((StatusCode::CREATED, Json(snippet)))
+    Ok((StatusCode::CREATED, Json(store.create(input).await?)))
 }
 
 pub async fn get_snippet(
     State(store): State<SnippetStore>,
-    Path(id): Path<Uuid>,
-) -> Result<Json<Snippet>, StatusCode> {
-    store
-        .0
-        .read()
-        .await
-        .get(&id)
-        .cloned()
-        .map(Json)
-        .ok_or(StatusCode::NOT_FOUND)
+    Path(id): Path<String>,
+) -> Result<Json<Snippet>, ApiError> {
+    store.get(&id).await?.map(Json).ok_or_else(|| ApiError {
+        status: StatusCode::NOT_FOUND,
+        error: "snippet not found".into(),
+    })
 }
 
 impl CreateSnippet {
     fn validate(&self) -> Result<(), ApiError> {
         if self.code.trim().is_empty() {
-            return Err(ApiError {
-                error: "code must not be empty",
-            });
+            return Err(ApiError::invalid("code must not be empty"));
         }
         if self.code.len() > MAX_CODE_BYTES {
-            return Err(ApiError {
-                error: "code must not exceed 100000 bytes",
-            });
+            return Err(ApiError::invalid("code must not exceed 100000 bytes"));
         }
         if self.title.chars().count() > MAX_TITLE_CHARS {
-            return Err(ApiError {
-                error: "title must not exceed 200 characters",
-            });
+            return Err(ApiError::invalid("title must not exceed 200 characters"));
         }
         if self.language.trim().is_empty() || self.language.chars().count() > 100 {
-            return Err(ApiError {
-                error: "language must contain 1 to 100 characters",
-            });
+            return Err(ApiError::invalid(
+                "language must contain 1 to 100 characters",
+            ));
         }
         if self.syntax_theme.trim().is_empty() || self.syntax_theme.chars().count() > 100 {
-            return Err(ApiError {
-                error: "syntaxTheme must contain 1 to 100 characters",
-            });
+            return Err(ApiError::invalid(
+                "syntaxTheme must contain 1 to 100 characters",
+            ));
         }
         if !["window", "terminal"].contains(&self.mode.as_str()) {
-            return Err(ApiError {
-                error: "mode must be window or terminal",
-            });
+            return Err(ApiError::invalid("mode must be window or terminal"));
         }
         if !["auto", "1:1", "4:3", "16:9"].contains(&self.aspect_ratio.as_str()) {
-            return Err(ApiError {
-                error: "aspectRatio must be auto, 1:1, 4:3, or 16:9",
-            });
+            return Err(ApiError::invalid(
+                "aspectRatio must be auto, 1:1, 4:3, or 16:9",
+            ));
         }
         if !["png", "webp", "jpeg"].contains(&self.image_format.as_str()) {
-            return Err(ApiError {
-                error: "imageFormat must be png, webp, or jpeg",
-            });
+            return Err(ApiError::invalid("imageFormat must be png, webp, or jpeg"));
         }
         if !(720..=1600).contains(&self.frame_width)
             || !(13..=22).contains(&self.font_size)
@@ -169,13 +320,30 @@ impl CreateSnippet {
             || self.radius > 36
             || self.palette_index > 11
         {
-            return Err(ApiError {
-                error: "frame styling is outside the supported range",
-            });
+            return Err(ApiError::invalid(
+                "frame styling is outside the supported range",
+            ));
         }
 
         Ok(())
     }
+}
+
+fn required_env(name: &str) -> Result<String, io::Error> {
+    env::var(name).map_err(|_| {
+        io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!("{name} must be configured"),
+        )
+    })
+}
+
+fn short_id() -> String {
+    Uuid::new_v4().simple().to_string()[..16].to_owned()
+}
+
+fn storage_key(id: &str) -> String {
+    format!("snippet:{id}")
 }
 
 fn default_title() -> String {
