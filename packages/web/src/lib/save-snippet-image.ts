@@ -9,7 +9,7 @@ import type { Palette } from "../palettes";
 import type { SyntaxTheme } from "../config/themes";
 import { getHighlighter } from "./highlighting";
 
-type SaveSnippetImageOptions = {
+export type RenderSnippetImageOptions = {
   code: string;
   fontSize: number;
   format: ImageFormat;
@@ -39,7 +39,7 @@ function roundedRect(
 
 function drawTitleBar(
   context: CanvasRenderingContext2D,
-  options: SaveSnippetImageOptions,
+  options: RenderSnippetImageOptions,
   width: number,
   x: number,
   y: number,
@@ -66,7 +66,7 @@ function drawTitleBar(
   context.textAlign = "left";
 }
 
-export async function saveSnippetImage(options: SaveSnippetImageOptions) {
+export async function renderSnippetImage(options: RenderSnippetImageOptions) {
   const {
     code,
     fontSize,
@@ -77,7 +77,6 @@ export async function saveSnippetImage(options: SaveSnippetImageOptions) {
     padding,
     palette,
     radius,
-    title,
     titleBar,
     syntaxTheme,
   } = options;
@@ -94,7 +93,7 @@ export async function saveSnippetImage(options: SaveSnippetImageOptions) {
   canvas.width = width * scale;
   canvas.height = height * scale;
   const context = canvas.getContext("2d");
-  if (!context) return;
+  if (!context) throw new Error("Canvas rendering is unavailable.");
   context.scale(scale, scale);
   const gradient = context.createLinearGradient(0, 0, width, height);
   gradient.addColorStop(0, palette.colors[0]);
@@ -135,20 +134,24 @@ export async function saveSnippetImage(options: SaveSnippetImageOptions) {
   });
   context.restore();
   const format = imageFormats.find((item) => item.value === formatValue)!;
-  await new Promise<void>((resolve) => {
+  return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (blob) => {
-        if (blob) {
-          const link = document.createElement("a");
-          link.href = URL.createObjectURL(blob);
-          link.download = `${title.replace(/\.[^.]+$/, "") || "code-frame"}.${format.extension}`;
-          link.click();
-          URL.revokeObjectURL(link.href);
-        }
-        resolve();
+        if (blob) resolve(blob);
+        else reject(new Error("The image could not be encoded."));
       },
       format.mimeType,
       format.quality,
     );
   });
+}
+
+export async function saveSnippetImage(options: RenderSnippetImageOptions) {
+  const blob = await renderSnippetImage(options);
+  const format = imageFormats.find((item) => item.value === options.format)!;
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `${options.title.replace(/\.[^.]+$/, "") || "code-frame"}.${format.extension}`;
+  link.click();
+  URL.revokeObjectURL(link.href);
 }

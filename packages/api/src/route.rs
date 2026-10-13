@@ -8,14 +8,22 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-use crate::snippet::{SnippetStore, create_snippet, get_snippet};
+use crate::{
+    image::{ImageRenderer, render_image},
+    snippet::{SnippetStore, create_snippet, get_snippet},
+};
 
-pub fn create_router(store: SnippetStore) -> Router {
+pub fn create_router(store: SnippetStore, renderer: ImageRenderer) -> Router {
     Router::new()
         .route("/health", get(|| async { "ok" }))
         .route("/api/snippets", post(create_snippet))
         .route("/api/snippets/{id}", get(get_snippet))
         .with_state(store)
+        .merge(
+            Router::new()
+                .route("/api/images", post(render_image))
+                .with_state(renderer),
+        )
         .layer(
             CorsLayer::new()
                 .allow_methods([Method::GET, Method::POST])
@@ -36,10 +44,10 @@ mod tests {
     use tower::ServiceExt;
 
     use super::create_router;
-    use crate::snippet::SnippetStore;
+    use crate::{image::ImageRenderer, snippet::SnippetStore};
 
     fn app() -> Router {
-        create_router(SnippetStore::memory())
+        create_router(SnippetStore::memory(), ImageRenderer::for_test())
     }
 
     #[tokio::test]
@@ -97,6 +105,21 @@ mod tests {
         let response = app()
             .oneshot(
                 Request::post("/api/snippets")
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(Body::from(json!({ "code": "" }).to_string()))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    }
+
+    #[tokio::test]
+    async fn image_requests_are_validated_before_rendering() {
+        let response = app()
+            .oneshot(
+                Request::post("/api/images")
                     .header(header::CONTENT_TYPE, "application/json")
                     .body(Body::from(json!({ "code": "" }).to_string()))
                     .unwrap(),

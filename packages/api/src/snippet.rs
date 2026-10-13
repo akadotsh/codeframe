@@ -57,7 +57,7 @@ pub(crate) struct Snippet {
     title_bar: bool,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct CreateSnippet {
     code: String,
@@ -249,7 +249,7 @@ impl IntoResponse for ApiError {
 }
 
 impl ApiError {
-    fn invalid(error: &'static str) -> Self {
+    pub(crate) fn invalid(error: &'static str) -> Self {
         Self {
             status: StatusCode::UNPROCESSABLE_ENTITY,
             error: error.into(),
@@ -260,6 +260,13 @@ impl ApiError {
         Self {
             status: StatusCode::SERVICE_UNAVAILABLE,
             error: "snippet storage is temporarily unavailable".into(),
+        }
+    }
+
+    pub(crate) fn rendering() -> Self {
+        Self {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            error: "image rendering is temporarily unavailable".into(),
         }
     }
 }
@@ -283,7 +290,7 @@ pub async fn get_snippet(
 }
 
 impl CreateSnippet {
-    fn validate(&self) -> Result<(), ApiError> {
+    pub(crate) fn validate(&self) -> Result<(), ApiError> {
         if self.code.trim().is_empty() {
             return Err(ApiError::invalid("code must not be empty"));
         }
@@ -326,6 +333,14 @@ impl CreateSnippet {
         }
 
         Ok(())
+    }
+
+    pub(crate) fn image_format(&self) -> &str {
+        &self.image_format
+    }
+
+    pub(crate) fn title(&self) -> &str {
+        &self.title
     }
 }
 
@@ -388,4 +403,17 @@ fn default_radius() -> u8 {
 
 fn enabled() -> bool {
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::CreateSnippet;
+
+    #[test]
+    fn image_format_defaults_to_png() {
+        let snippet: CreateSnippet =
+            serde_json::from_str(r#"{"code":"let ready = true;"}"#).unwrap();
+
+        assert_eq!(snippet.image_format(), "png");
+    }
 }
