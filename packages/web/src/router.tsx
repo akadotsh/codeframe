@@ -1,8 +1,8 @@
 import { createRootRoute, createRoute, createRouter, Outlet } from "@tanstack/react-router";
 import { App } from "./App";
 import { validateSnippetSearch } from "./config/snippet-state";
+import { DownloadPage } from "./download-page";
 import { getSnippet } from "./lib/snippet-api";
-import { RenderPage } from "./render-page";
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
 const indexRoute = createRoute({
@@ -17,17 +17,22 @@ const sharedRoute = createRoute({
   loader: ({ params }) => getSnippet(params.snippetId),
   component: SharedSnippet,
 });
-const renderRoute = createRoute({
+const downloadRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/render",
-  component: RenderPage,
+  path: "/download/$snippetId",
+  loader: ({ params }) => getSnippet(params.snippetId),
+  component: DownloadSnippet,
 });
 
 function SharedSnippet() {
   return <App initialState={sharedRoute.useLoaderData()} />;
 }
 
-const routeTree = rootRoute.addChildren([indexRoute, sharedRoute, renderRoute]);
+function DownloadSnippet() {
+  return <DownloadPage state={downloadRoute.useLoaderData()} />;
+}
+
+const routeTree = rootRoute.addChildren([indexRoute, sharedRoute, downloadRoute]);
 export const router = createRouter({ routeTree });
 
 declare module "@tanstack/react-router" {

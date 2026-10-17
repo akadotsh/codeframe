@@ -8,22 +8,14 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-use crate::{
-    image::{ImageRenderer, render_image},
-    snippet::{SnippetStore, create_snippet, get_snippet},
-};
+use crate::snippet::{SnippetStore, create_snippet, get_snippet};
 
-pub fn create_router(store: SnippetStore, renderer: ImageRenderer) -> Router {
+pub fn create_router(store: SnippetStore) -> Router {
     Router::new()
         .route("/health", get(|| async { "ok" }))
         .route("/api/snippets", post(create_snippet))
         .route("/api/snippets/{id}", get(get_snippet))
         .with_state(store)
-        .merge(
-            Router::new()
-                .route("/api/images", post(render_image))
-                .with_state(renderer),
-        )
         .layer(
             CorsLayer::new()
                 .allow_methods([Method::GET, Method::POST])
@@ -44,10 +36,10 @@ mod tests {
     use tower::ServiceExt;
 
     use super::create_router;
-    use crate::{image::ImageRenderer, snippet::SnippetStore};
+    use crate::snippet::SnippetStore;
 
     fn app() -> Router {
-        create_router(SnippetStore::memory(), ImageRenderer::for_test())
+        create_router(SnippetStore::memory())
     }
 
     #[tokio::test]
@@ -85,8 +77,10 @@ mod tests {
         let body: Value =
             serde_json::from_slice(&to_bytes(response.into_body(), usize::MAX).await.unwrap())
                 .unwrap();
-        let id = body["id"].as_str().unwrap();
-        assert_eq!(body["url"], format!("http://localhost:5173/s/{id}"));
+        let download_url = body["download_url"].as_str().unwrap();
+        let id = download_url.rsplit('/').next().unwrap();
+        assert_eq!(download_url, format!("http://localhost:5173/download/{id}"));
+        assert_eq!(body.as_object().unwrap().len(), 1);
 
         let response = app
             .oneshot(
@@ -105,21 +99,6 @@ mod tests {
         let response = app()
             .oneshot(
                 Request::post("/api/snippets")
-                    .header(header::CONTENT_TYPE, "application/json")
-                    .body(Body::from(json!({ "code": "" }).to_string()))
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-
-        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
-    }
-
-    #[tokio::test]
-    async fn image_requests_are_validated_before_rendering() {
-        let response = app()
-            .oneshot(
-                Request::post("/api/images")
                     .header(header::CONTENT_TYPE, "application/json")
                     .body(Body::from(json!({ "code": "" }).to_string()))
                     .unwrap(),

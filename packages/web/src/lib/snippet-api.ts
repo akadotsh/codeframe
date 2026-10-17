@@ -4,10 +4,8 @@ import {
   type SnippetState,
 } from "../config/snippet-state";
 
-type CreatedSnippet = SnippetState & {
-  expiresIn: number;
-  id: string;
-  url: string;
+type CreatedSnippet = {
+  download_url: string;
 };
 
 export async function createSnippet(state: SnippetState) {
@@ -16,10 +14,11 @@ export async function createSnippet(state: SnippetState) {
     headers: { "content-type": "application/json" },
     method: "POST",
   });
-  if (!response.ok) throw new Error("The short link could not be created.");
+  if (!response.ok) throw new Error("The download URL could not be created.");
 
   const snippet = (await response.json()) as Partial<CreatedSnippet>;
-  if (typeof snippet.url !== "string") throw new Error("The API returned an invalid short link.");
+  if (typeof snippet.download_url !== "string")
+    throw new Error("The API returned an invalid link.");
   return snippet as CreatedSnippet;
 }
 

@@ -84,7 +84,7 @@ export function App({ initialState }: { initialState?: SnippetState }) {
     const url = initialState
       ? window.location.href
       : await createSnippet(state)
-          .then((snippet) => snippet.url)
+          .then((snippet) => snippet.download_url)
           .catch(() => window.location.href);
     await navigator.clipboard.writeText(url);
     setCopied(true);
@@ -186,7 +186,7 @@ export function App({ initialState }: { initialState?: SnippetState }) {
               <Copy {...stylex.props(appStyles.utilityIcon)} />
             )}
             <span {...stylex.props(appStyles.utilityLabel)} aria-live="polite">
-              {copied ? "Copied" : "Copy link"}
+              {copied ? "Copied" : "Copy download link"}
             </span>
           </button>
           <SaveControl

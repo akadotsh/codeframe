@@ -1,7 +1,7 @@
 # Cloudflare deployment
 
 Cloudflare serves the web build as Worker static assets and forwards `/api/*` to the Rust API in a
-Container. The container includes Chromium for image rendering; Upstash remains the snippet store.
+Container. Upstash remains the snippet store, while image downloads are rendered in the browser.
 
 ## First deployment
 

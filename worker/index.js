@@ -6,11 +6,8 @@ export class ApiContainer extends Container {
   sleepAfter = "10m";
   envVars = {
     API_URL: env.APP_URL,
-    CHROME_BIN: "/usr/bin/chromium",
-    CHROME_NO_SANDBOX: "1",
     PORT: "8080",
     PUBLIC_WEB_URL: env.APP_URL,
-    RENDER_PAGE_URL: `${env.APP_URL}/render`,
     UPSTASH_REDIS_REST_TOKEN: env.UPSTASH_REDIS_REST_TOKEN,
     UPSTASH_REDIS_REST_URL: env.UPSTASH_REDIS_REST_URL,
   };

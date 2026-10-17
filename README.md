@@ -23,15 +23,13 @@ npm run dev:api
 
 ## API
 
-- `POST /api/snippets` creates a short share link backed by Upstash Redis.
+- `POST /api/snippets` stores a snippet and returns its `download_url`.
 - `GET /api/snippets/{id}` retrieves a shared snippet.
-- `POST /api/images` returns a PNG, WebP, or JPEG image.
 
-Create an image:
+Create a download URL:
 
 ```bash
-curl --fail --show-error http://localhost:8080/api/images \
+curl --fail --show-error http://localhost:8080/api/snippets \
   --header 'content-type: application/json' \
-  --data '{"code":"fn main() {}","language":"Rust","title":"main.rs","imageFormat":"png"}' \
-  --output code-frame.png
+  --data '{"code":"fn main() {}","language":"Rust","title":"main.rs","imageFormat":"png"}'
 ```

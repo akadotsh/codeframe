@@ -92,10 +92,8 @@ pub struct CreateSnippet {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct CreatedSnippet {
-    #[serde(flatten)]
-    snippet: Snippet,
-    url: String,
-    expires_in: u64,
+    #[serde(rename = "download_url")]
+    download_url: String,
 }
 
 #[derive(Debug, Serialize)]
@@ -161,9 +159,7 @@ impl SnippetStore {
 
             if self.put(&snippet).await? {
                 return Ok(CreatedSnippet {
-                    url: format!("{}/s/{}", self.public_web_url, snippet.id),
-                    snippet,
-                    expires_in: SNIPPET_TTL_SECONDS,
+                    download_url: format!("{}/download/{}", self.public_web_url, snippet.id),
                 });
             }
         }
@@ -262,13 +258,6 @@ impl ApiError {
             error: "snippet storage is temporarily unavailable".into(),
         }
     }
-
-    pub(crate) fn rendering() -> Self {
-        Self {
-            status: StatusCode::SERVICE_UNAVAILABLE,
-            error: "image rendering is temporarily unavailable".into(),
-        }
-    }
 }
 
 pub async fn create_snippet(
@@ -333,14 +322,6 @@ impl CreateSnippet {
         }
 
         Ok(())
-    }
-
-    pub(crate) fn image_format(&self) -> &str {
-        &self.image_format
-    }
-
-    pub(crate) fn title(&self) -> &str {
-        &self.title
     }
 }
 
@@ -414,6 +395,6 @@ mod tests {
         let snippet: CreateSnippet =
             serde_json::from_str(r#"{"code":"let ready = true;"}"#).unwrap();
 
-        assert_eq!(snippet.image_format(), "png");
+        assert_eq!(snippet.image_format, "png");
     }
 }
