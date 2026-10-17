@@ -1,15 +1,34 @@
 # Code Frame
 
-A focused TanStack Router app for turning code snippets into polished PNG images.
+A focused web app and API for turning code snippets into polished images and shareable links.
+
+## Tech stack
+
+- React, TanStack Router, Shiki, and Canvas for the editor and image renderer
+- Rust, Axum, and Tokio for the API
+- Upstash Redis as the key-value store for shareable snippet state
+- Headless Chrome for server-side PNG, WebP, and JPEG rendering
+- npm workspaces for the monorepo
 
 ## Architecture
 
-Code Frame uses npm workspaces for the browser application and a small Rust API built with Axum.
-
 ```text
 packages/
-├── api/    # Rust API
-└── web/    # React web app
+├── api/    # Axum API, Upstash persistence, and headless image rendering
+└── web/    # React editor, shared-link loader, and Canvas renderer
+```
+
+The web app can export an image directly in the browser. For a share link, it sends the snippet
+configuration to `POST /api/snippets`; the API validates it and stores the JSON in Upstash with a
+90-day expiry. The returned short URL loads the state through `GET /api/snippets/{id}`.
+
+`POST /api/images` accepts the same snippet configuration. The API opens the web app's `/render`
+route in headless Chrome, reuses the browser renderer, and returns the image bytes directly. Images
+are generated on demand and are not stored in Upstash.
+
+```text
+Share link: Web app -> Rust API -> Upstash -> /s/{id}
+Image API:  Client  -> Rust API -> /render -> PNG, WebP, or JPEG
 ```
 
 ## Development
@@ -19,24 +38,37 @@ npm install
 npm run dev
 ```
 
-Run the API separately at `http://localhost:8080`:
+Copy `.env.example` to `.env`, add the Upstash REST credentials, and run the API separately:
 
 ```bash
 npm run dev:api
 ```
+
+The web app must be running at `RENDER_PAGE_URL` for server-side image rendering. Locally, the
+defaults are `http://localhost:5173/render` and `http://localhost:8080` for the API.
 
 The API exposes:
 
 - `GET /health` to check availability
 - `POST /api/snippets` to create a code-frame snippet
 - `GET /api/snippets/{id}` to retrieve a created snippet
+- `POST /api/images` to return a rendered PNG, WebP, or JPEG
 
-For example:
+Create a short share link:
 
 ```bash
-curl http://localhost:8080/api/snippets \
+curl --fail --show-error http://localhost:8080/api/snippets \
   --header 'content-type: application/json' \
   --data '{"code":"fn main() {}","language":"Rust","title":"main.rs"}'
+```
+
+Render an image (`imageFormat` defaults to `png`):
+
+```bash
+curl --fail --show-error http://localhost:8080/api/images \
+  --header 'content-type: application/json' \
+  --data '{"code":"fn main() {\n    println!(\"Hello!\");\n}","language":"Rust","title":"main.rs","imageFormat":"png"}' \
+  --output code-frame.png
 ```
 
 Useful checks:
@@ -46,6 +78,3 @@ npm run typecheck
 npm run build
 npm run check
 ```
-
-Code and image exports currently stay entirely in the browser; the API is ready for server-side
-features as they are added.
