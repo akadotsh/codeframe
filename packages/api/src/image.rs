@@ -17,6 +17,7 @@ use crate::snippet::{ApiError, CreateSnippet};
 pub struct ImageRenderer {
     chrome_path: Option<PathBuf>,
     page_url: String,
+    sandbox: bool,
     slots: Arc<Semaphore>,
 }
 
@@ -26,6 +27,7 @@ impl ImageRenderer {
             chrome_path: env::var_os("CHROME_BIN").map(PathBuf::from),
             page_url: env::var("RENDER_PAGE_URL")
                 .unwrap_or_else(|_| "http://localhost:5173/render".into()),
+            sandbox: env::var_os("CHROME_NO_SANDBOX").is_none(),
             slots: Arc::new(Semaphore::new(2)),
         }
     }
@@ -35,6 +37,7 @@ impl ImageRenderer {
         Self {
             chrome_path: None,
             page_url: "http://localhost:5173/render".into(),
+            sandbox: true,
             slots: Arc::new(Semaphore::new(1)),
         }
     }
@@ -48,10 +51,11 @@ impl ImageRenderer {
         let state = serde_json::to_vec(request).map_err(|_| ApiError::rendering())?;
         let url = format!("{}#{}", self.page_url, URL_SAFE_NO_PAD.encode(state));
         let chrome_path = self.chrome_path.clone();
+        let sandbox = self.sandbox;
 
         let rendered = time::timeout(
             Duration::from_secs(20),
-            task::spawn_blocking(move || render_in_browser(url, chrome_path)),
+            task::spawn_blocking(move || render_in_browser(url, chrome_path, sandbox)),
         )
         .await
         .map_err(|_| ApiError::rendering())?
@@ -99,11 +103,16 @@ pub async fn render_image(
     Ok(response)
 }
 
-fn render_in_browser(url: String, chrome_path: Option<PathBuf>) -> Result<Vec<u8>, String> {
+fn render_in_browser(
+    url: String,
+    chrome_path: Option<PathBuf>,
+    sandbox: bool,
+) -> Result<Vec<u8>, String> {
     // shortcut: launch one browser per request, pool Chrome when render traffic warrants it.
     let options = LaunchOptionsBuilder::default()
         .headless(true)
         .path(chrome_path)
+        .sandbox(sandbox)
         .build()
         .map_err(|error| error.to_string())?;
     let browser = Browser::new(options).map_err(|error| error.to_string())?;
