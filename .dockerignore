@@ -1,9 +1,0 @@
-.git
-.env
-.env.*
-.dev.vars
-node_modules
-packages/api/target
-packages/web/dist
-target
-*.png

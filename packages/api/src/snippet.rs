@@ -1,45 +1,15 @@
-#[cfg(test)]
-use std::{collections::HashMap, sync::Arc};
-use std::{env, io};
-
-use axum::{
-    Json,
-    extract::{Path, State},
-    http::StatusCode,
-    response::{IntoResponse, Response},
-};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-#[cfg(test)]
-use tokio::sync::RwLock;
 use uuid::Uuid;
+use wasm_bindgen::JsValue;
+use worker::{Env, Fetch, Headers, Method, Request, RequestInit, Response, Result};
 
 const MAX_CODE_BYTES: usize = 100_000;
 const MAX_TITLE_CHARS: usize = 200;
 const SNIPPET_TTL_SECONDS: u64 = 60 * 60 * 24 * 90;
 
-#[derive(Clone)]
-pub struct SnippetStore {
-    backend: Backend,
-    public_web_url: String,
-}
-
-#[derive(Clone)]
-enum Backend {
-    Upstash(Upstash),
-    #[cfg(test)]
-    Memory(Arc<RwLock<HashMap<String, Snippet>>>),
-}
-
-#[derive(Clone)]
-struct Upstash {
-    client: reqwest::Client,
-    token: String,
-    url: String,
-}
-
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub(crate) struct Snippet {
+struct Snippet {
     id: String,
     code: String,
     title: String,
@@ -57,9 +27,9 @@ pub(crate) struct Snippet {
     title_bar: bool,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
-pub struct CreateSnippet {
+struct CreateSnippet {
     code: String,
     #[serde(default = "default_title")]
     title: String,
@@ -89,17 +59,13 @@ pub struct CreateSnippet {
     title_bar: bool,
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Serialize)]
 struct CreatedSnippet {
-    #[serde(rename = "download_url")]
     download_url: String,
 }
 
-#[derive(Debug, Serialize)]
-pub(crate) struct ApiError {
-    #[serde(skip)]
-    status: StatusCode,
+#[derive(Serialize)]
+struct ApiError {
     error: String,
 }
 
@@ -108,34 +74,52 @@ struct UpstashResponse<T> {
     result: T,
 }
 
-impl SnippetStore {
-    pub fn from_env() -> Result<Self, io::Error> {
-        let url = required_env("UPSTASH_REDIS_REST_URL")?;
-        let token = required_env("UPSTASH_REDIS_REST_TOKEN")?;
-        let public_web_url = env::var("PUBLIC_WEB_URL")
-            .unwrap_or_else(|_| "http://localhost:5173".into())
-            .trim_end_matches('/')
-            .to_owned();
+struct Store {
+    public_web_url: String,
+    token: String,
+    url: String,
+}
 
+pub async fn create(request: &mut Request, env: &Env) -> Result<Response> {
+    let input = match request.json::<CreateSnippet>().await {
+        Ok(input) => input,
+        Err(_) => return api_error(422, "request body must be valid JSON"),
+    };
+    if let Err(error) = input.validate() {
+        return api_error(422, error);
+    }
+
+    match Store::new(env)?.create(input).await {
+        Ok(created) => Ok(Response::from_json(&created)?.with_status(201)),
+        Err(error) => api_error(503, error),
+    }
+}
+
+pub async fn get(id: &str, env: &Env) -> Result<Response> {
+    match Store::new(env)?.get(id).await {
+        Ok(Some(snippet)) => Response::from_json(&snippet),
+        Ok(None) => api_error(404, "snippet not found"),
+        Err(error) => api_error(503, error),
+    }
+}
+
+impl Store {
+    fn new(env: &Env) -> Result<Self> {
         Ok(Self {
-            backend: Backend::Upstash(Upstash {
-                client: reqwest::Client::new(),
-                token,
-                url: url.trim_end_matches('/').to_owned(),
-            }),
-            public_web_url,
+            public_web_url: env.var("APP_URL")?.to_string().trim_end_matches('/').into(),
+            token: env.secret("UPSTASH_REDIS_REST_TOKEN")?.to_string(),
+            url: env
+                .secret("UPSTASH_REDIS_REST_URL")?
+                .to_string()
+                .trim_end_matches('/')
+                .into(),
         })
     }
 
-    #[cfg(test)]
-    pub fn memory() -> Self {
-        Self {
-            backend: Backend::Memory(Arc::default()),
-            public_web_url: "http://localhost:5173".into(),
-        }
-    }
-
-    async fn create(&self, input: CreateSnippet) -> Result<CreatedSnippet, ApiError> {
+    async fn create(
+        &self,
+        input: CreateSnippet,
+    ) -> std::result::Result<CreatedSnippet, &'static str> {
         let mut snippet = Snippet {
             id: String::new(),
             code: input.code,
@@ -156,159 +140,90 @@ impl SnippetStore {
 
         for _ in 0..3 {
             snippet.id = short_id();
-
-            if self.put(&snippet).await? {
+            let value = serde_json::to_string(&snippet).map_err(|_| storage_error())?;
+            let ttl = SNIPPET_TTL_SECONDS.to_string();
+            let key = storage_key(&snippet.id);
+            let result: Option<String> = self
+                .command(&["SET", &key, &value, "EX", &ttl, "NX"])
+                .await?;
+            if result.as_deref() == Some("OK") {
                 return Ok(CreatedSnippet {
                     download_url: format!("{}/download/{}", self.public_web_url, snippet.id),
                 });
             }
         }
 
-        Err(ApiError::unavailable())
+        Err(storage_error())
     }
 
-    async fn get(&self, id: &str) -> Result<Option<Snippet>, ApiError> {
+    async fn get(&self, id: &str) -> std::result::Result<Option<Snippet>, &'static str> {
         if id.len() != 16 || !id.bytes().all(|byte| byte.is_ascii_hexdigit()) {
             return Ok(None);
         }
-
-        match &self.backend {
-            Backend::Upstash(upstash) => {
-                let key = storage_key(id);
-                let value: Option<String> = upstash.command(&["GET", &key]).await?;
-                value
-                    .map(|value| serde_json::from_str(&value).map_err(|_| ApiError::unavailable()))
-                    .transpose()
-            }
-            #[cfg(test)]
-            Backend::Memory(snippets) => Ok(snippets.read().await.get(id).cloned()),
-        }
+        let key = storage_key(id);
+        let value: Option<String> = self.command(&["GET", &key]).await?;
+        value
+            .map(|value| serde_json::from_str(&value).map_err(|_| storage_error()))
+            .transpose()
     }
 
-    async fn put(&self, snippet: &Snippet) -> Result<bool, ApiError> {
-        match &self.backend {
-            Backend::Upstash(upstash) => {
-                let value = serde_json::to_string(snippet).map_err(|_| ApiError::unavailable())?;
-                let ttl = SNIPPET_TTL_SECONDS.to_string();
-                let key = storage_key(&snippet.id);
-                let result: Option<String> = upstash
-                    .command(&["SET", &key, &value, "EX", &ttl, "NX"])
-                    .await?;
-                Ok(result.as_deref() == Some("OK"))
-            }
-            #[cfg(test)]
-            Backend::Memory(snippets) => {
-                let mut snippets = snippets.write().await;
-                if snippets.contains_key(&snippet.id) {
-                    return Ok(false);
-                }
-                snippets.insert(snippet.id.clone(), snippet.clone());
-                Ok(true)
-            }
-        }
-    }
-}
-
-impl Upstash {
-    async fn command<T>(&self, command: &[&str]) -> Result<T, ApiError>
+    async fn command<T>(&self, command: &[&str]) -> std::result::Result<T, &'static str>
     where
         T: DeserializeOwned,
     {
-        let response = self
-            .client
-            .post(&self.url)
-            .bearer_auth(&self.token)
-            .json(&command)
+        let headers = Headers::new();
+        headers
+            .set("authorization", &format!("Bearer {}", self.token))
+            .map_err(|_| storage_error())?;
+        headers
+            .set("content-type", "application/json")
+            .map_err(|_| storage_error())?;
+        let body = serde_json::to_string(command).map_err(|_| storage_error())?;
+        let mut init = RequestInit::new();
+        init.with_method(Method::Post)
+            .with_headers(headers)
+            .with_body(Some(JsValue::from_str(&body)));
+        let request = Request::new_with_init(&self.url, &init).map_err(|_| storage_error())?;
+        let mut response = Fetch::Request(request)
             .send()
             .await
-            .and_then(reqwest::Response::error_for_status)
-            .map_err(|error| {
-                eprintln!("Upstash request failed: {error}");
-                ApiError::unavailable()
-            })?;
-
+            .map_err(|_| storage_error())?;
+        if !(200..300).contains(&response.status_code()) {
+            return Err(storage_error());
+        }
         response
             .json::<UpstashResponse<T>>()
             .await
             .map(|body| body.result)
-            .map_err(|error| {
-                eprintln!("Invalid Upstash response: {error}");
-                ApiError::unavailable()
-            })
+            .map_err(|_| storage_error())
     }
-}
-
-impl IntoResponse for ApiError {
-    fn into_response(self) -> Response {
-        (self.status, Json(self)).into_response()
-    }
-}
-
-impl ApiError {
-    pub(crate) fn invalid(error: &'static str) -> Self {
-        Self {
-            status: StatusCode::UNPROCESSABLE_ENTITY,
-            error: error.into(),
-        }
-    }
-
-    fn unavailable() -> Self {
-        Self {
-            status: StatusCode::SERVICE_UNAVAILABLE,
-            error: "snippet storage is temporarily unavailable".into(),
-        }
-    }
-}
-
-pub async fn create_snippet(
-    State(store): State<SnippetStore>,
-    Json(input): Json<CreateSnippet>,
-) -> Result<impl IntoResponse, ApiError> {
-    input.validate()?;
-    Ok((StatusCode::CREATED, Json(store.create(input).await?)))
-}
-
-pub async fn get_snippet(
-    State(store): State<SnippetStore>,
-    Path(id): Path<String>,
-) -> Result<Json<Snippet>, ApiError> {
-    store.get(&id).await?.map(Json).ok_or_else(|| ApiError {
-        status: StatusCode::NOT_FOUND,
-        error: "snippet not found".into(),
-    })
 }
 
 impl CreateSnippet {
-    pub(crate) fn validate(&self) -> Result<(), ApiError> {
+    fn validate(&self) -> std::result::Result<(), &'static str> {
         if self.code.trim().is_empty() {
-            return Err(ApiError::invalid("code must not be empty"));
+            return Err("code must not be empty");
         }
         if self.code.len() > MAX_CODE_BYTES {
-            return Err(ApiError::invalid("code must not exceed 100000 bytes"));
+            return Err("code must not exceed 100000 bytes");
         }
         if self.title.chars().count() > MAX_TITLE_CHARS {
-            return Err(ApiError::invalid("title must not exceed 200 characters"));
+            return Err("title must not exceed 200 characters");
         }
         if self.language.trim().is_empty() || self.language.chars().count() > 100 {
-            return Err(ApiError::invalid(
-                "language must contain 1 to 100 characters",
-            ));
+            return Err("language must contain 1 to 100 characters");
         }
         if self.syntax_theme.trim().is_empty() || self.syntax_theme.chars().count() > 100 {
-            return Err(ApiError::invalid(
-                "syntaxTheme must contain 1 to 100 characters",
-            ));
+            return Err("syntaxTheme must contain 1 to 100 characters");
         }
         if !["window", "terminal"].contains(&self.mode.as_str()) {
-            return Err(ApiError::invalid("mode must be window or terminal"));
+            return Err("mode must be window or terminal");
         }
         if !["auto", "1:1", "4:3", "16:9"].contains(&self.aspect_ratio.as_str()) {
-            return Err(ApiError::invalid(
-                "aspectRatio must be auto, 1:1, 4:3, or 16:9",
-            ));
+            return Err("aspectRatio must be auto, 1:1, 4:3, or 16:9");
         }
         if !["png", "webp", "jpeg"].contains(&self.image_format.as_str()) {
-            return Err(ApiError::invalid("imageFormat must be png, webp, or jpeg"));
+            return Err("imageFormat must be png, webp, or jpeg");
         }
         if !(720..=1600).contains(&self.frame_width)
             || !(13..=22).contains(&self.font_size)
@@ -316,22 +231,21 @@ impl CreateSnippet {
             || self.radius > 36
             || self.palette_index > 11
         {
-            return Err(ApiError::invalid(
-                "frame styling is outside the supported range",
-            ));
+            return Err("frame styling is outside the supported range");
         }
-
         Ok(())
     }
 }
 
-fn required_env(name: &str) -> Result<String, io::Error> {
-    env::var(name).map_err(|_| {
-        io::Error::new(
-            io::ErrorKind::InvalidInput,
-            format!("{name} must be configured"),
-        )
-    })
+fn api_error(status: u16, error: &str) -> Result<Response> {
+    Ok(Response::from_json(&ApiError {
+        error: error.into(),
+    })?
+    .with_status(status))
+}
+
+fn storage_error() -> &'static str {
+    "snippet storage is temporarily unavailable"
 }
 
 fn short_id() -> String {
@@ -393,8 +307,15 @@ mod tests {
     #[test]
     fn image_format_defaults_to_png() {
         let snippet: CreateSnippet =
-            serde_json::from_str(r#"{"code":"let ready = true;"}"#).unwrap();
+            serde_json::from_str(r#"{"code":"let ready = true;}"}"#).unwrap();
 
         assert_eq!(snippet.image_format, "png");
+    }
+
+    #[test]
+    fn empty_code_is_rejected() {
+        let snippet: CreateSnippet = serde_json::from_str(r#"{"code":""}"#).unwrap();
+
+        assert_eq!(snippet.validate(), Err("code must not be empty"));
     }
 }

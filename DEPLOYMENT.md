@@ -1,7 +1,7 @@
 # Cloudflare deployment
 
-Cloudflare serves the web build as Worker static assets and forwards `/api/*` to the Rust API in a
-Container. Upstash remains the snippet store, while image downloads are rendered in the browser.
+Cloudflare serves the web build as static assets and runs the Rust API as a WebAssembly Worker.
+Upstash remains the snippet store, while image downloads are rendered in the browser.
 
 ## First deployment
 
@@ -27,22 +27,20 @@ Container. Upstash remains the snippet store, while image downloads are rendered
    npm run deploy:cloudflare
    ```
 
-The first container request can take a few minutes while Cloudflare provisions the image.
-
 ## Automatic deployments
 
 Connect the GitHub repository under **Workers & Pages → Create application** and use:
 
 - Production branch: `main`
-- Build command: `npm run build`
+- Build command: `npm run build && cargo install --locked worker-build@^0.8 && npm run build:api`
 - Deploy command: `npx wrangler deploy`
 
 Add both Upstash values under the Worker build/deployment secrets. Each push to `main` will then
-build and deploy the web app, Worker, and API container.
+build and deploy the web app and Rust Worker.
 
 ## Local Cloudflare test
 
-Docker must be running. Add the two Upstash values to `.dev.vars`, then run:
+Add the two Upstash values to `.dev.vars`, then run:
 
 ```bash
 npm run dev:cloudflare

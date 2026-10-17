@@ -5,20 +5,14 @@ output.
 
 ## Tech stack
 
-`React` · `TanStack Router` · `Rust` · `Axum` · `Upstash Redis`
+`React` · `TanStack Router` · `Rust` · `Cloudflare Workers` · `Upstash Redis`
 
 ## Development
 
 ```bash
 npm install
-cp .env.example .env
-npm run dev
-```
-
-Run the API in a separate terminal:
-
-```bash
-npm run dev:api
+cp .env.example .dev.vars
+npm run dev:cloudflare
 ```
 
 ## API
@@ -29,7 +23,7 @@ npm run dev:api
 Create a download URL:
 
 ```bash
-curl --fail --show-error http://localhost:8080/api/snippets \
+curl --fail --show-error http://localhost:8787/api/snippets \
   --header 'content-type: application/json' \
   --data '{"code":"fn main() {}","language":"Rust","title":"main.rs","imageFormat":"png"}'
 ```
