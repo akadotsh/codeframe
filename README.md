@@ -1,39 +1,35 @@
 # Code Frame
 
-A focused TanStack Router app for turning code snippets into polished PNG images.
+An app for creating beautiful screenshots and shareable images from code snippets and terminal
+output.
 
-## Architecture
+## Tech stack
 
-Code Frame uses npm workspaces for the browser application and a small Rust API built with Axum.
-
-```text
-packages/
-├── api/    # Rust API
-└── web/    # React web app
-```
+`React` · `TanStack Router` · `Rust` · `Axum` · `Upstash Redis`
 
 ## Development
 
 ```bash
 npm install
+cp .env.example .env
 npm run dev
 ```
 
-Run the API separately at `http://localhost:8080`:
+Run the API in a separate terminal:
 
 ```bash
 npm run dev:api
 ```
 
-Its initial health check is available at `GET /health`.
+## API
 
-Useful checks:
+- `POST /api/snippets` stores a snippet and returns its `download_url`.
+- `GET /api/snippets/{id}` retrieves a shared snippet.
+
+Create a download URL:
 
 ```bash
-npm run typecheck
-npm run build
-npm run check
+curl --fail --show-error http://localhost:8080/api/snippets \
+  --header 'content-type: application/json' \
+  --data '{"code":"fn main() {}","language":"Rust","title":"main.rs","imageFormat":"png"}'
 ```
-
-Code and image exports currently stay entirely in the browser; the API is ready for server-side
-features as they are added.

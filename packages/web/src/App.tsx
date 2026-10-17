@@ -16,13 +16,14 @@ import { aspectRatios, clampFrameWidth, getFrameMetrics, type ImageFormat } from
 import type { SyntaxTheme } from "./config/themes";
 import { resolveSnippetState, toSnippetSearch, type SnippetState } from "./config/snippet-state";
 import { saveSnippetImage } from "./lib/save-snippet-image";
+import { createSnippet } from "./lib/snippet-api";
 import { palettes } from "./palettes";
 import { appStyles } from "./styles/app.stylex";
 
-export function App() {
-  const search = useSearch({ from: "/" });
-  const navigate = useNavigate({ from: "/" });
-  const state = resolveSnippetState(search);
+export function App({ initialState }: { initialState?: SnippetState }) {
+  const search = useSearch({ strict: false });
+  const navigate = useNavigate();
+  const state = resolveSnippetState({ ...initialState, ...search });
   const {
     aspectRatio,
     code,
@@ -69,18 +70,23 @@ export function App() {
   );
 
   const updateState = (patch: Partial<SnippetState>) => {
-    void navigate({ search: toSnippetSearch({ ...state, ...patch }), replace: true });
+    void navigate({ to: "/", search: toSnippetSearch({ ...state, ...patch }), replace: true });
   };
 
   const resetSnippet = () => {
     setPreviewTheme(null);
     setSaved(false);
     setCopied(false);
-    void navigate({ search: {}, replace: true });
+    void navigate({ to: "/", search: {}, replace: true });
   };
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
+    const url = initialState
+      ? window.location.href
+      : await createSnippet(state)
+          .then((snippet) => snippet.download_url)
+          .catch(() => window.location.href);
+    await navigator.clipboard.writeText(url);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
   };
@@ -180,7 +186,7 @@ export function App() {
               <Copy {...stylex.props(appStyles.utilityIcon)} />
             )}
             <span {...stylex.props(appStyles.utilityLabel)} aria-live="polite">
-              {copied ? "Copied" : "Copy link"}
+              {copied ? "Copied" : "Copy download link"}
             </span>
           </button>
           <SaveControl
