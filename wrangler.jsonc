@@ -12,6 +12,6 @@
     "watch_dir": "./packages/api/src"
   },
   "vars": {
-    "APP_URL": "https://your-pages-site.pages.dev"
+    "APP_URL": "https://code-frame.devakash256.workers.dev/"
   }
 }
