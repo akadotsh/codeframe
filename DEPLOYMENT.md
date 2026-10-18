@@ -1,6 +1,6 @@
 # Cloudflare deployment
 
-Cloudflare serves the web build as static assets and runs the Rust API as a WebAssembly Worker.
+Cloudflare Pages serves the existing web app. A separate Cloudflare Worker runs only the Rust API.
 Upstash remains the snippet store, while image downloads are rendered in the browser.
 
 ## First deployment
@@ -12,7 +12,8 @@ Upstash remains the snippet store, while image downloads are rendered in the bro
    npx wrangler login
    ```
 
-2. Replace `APP_URL` in `wrangler.jsonc` with the final Worker or custom-domain URL.
+2. Replace `APP_URL` in `wrangler.jsonc` with the existing Cloudflare Pages URL. Download links
+   open the `/download/:id` route on that web app.
 
 3. Add the Upstash credentials as Worker secrets:
 
@@ -24,24 +25,34 @@ Upstash remains the snippet store, while image downloads are rendered in the bro
 4. Deploy:
 
    ```bash
-   npm run deploy:cloudflare
+   npm run deploy:api
    ```
 
 ## Automatic deployments
 
-Connect the GitHub repository under **Workers & Pages → Create application** and use:
+Connect the GitHub repository to a separate Worker and use:
 
 - Production branch: `main`
-- Build command: `npm run build && cargo install --locked worker-build@^0.8 && npm run build:api`
+- Build command: `cargo install --locked worker-build@^0.8`
 - Deploy command: `npx wrangler deploy`
 
-Add both Upstash values under the Worker build/deployment secrets. Each push to `main` will then
-build and deploy the web app and Rust Worker.
+Add both Upstash values under the Worker build/deployment secrets. This deployment does not build
+or upload the web app.
+
+## Connect the Pages app
+
+Set this build variable on the existing Pages project, then redeploy the Pages app once:
+
+```text
+VITE_API_URL=https://code-frame-api.<your-subdomain>.workers.dev
+```
+
+Use the URL printed by Wrangler after the API deployment.
 
 ## Local Cloudflare test
 
 Add the two Upstash values to `.dev.vars`, then run:
 
 ```bash
-npm run dev:cloudflare
+npm run dev:api
 ```

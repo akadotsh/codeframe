@@ -8,8 +8,10 @@ type CreatedSnippet = {
   download_url: string;
 };
 
+const apiUrl = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
+
 export async function createSnippet(state: SnippetState) {
-  const response = await fetch("/api/snippets", {
+  const response = await fetch(`${apiUrl}/api/snippets`, {
     body: JSON.stringify(state),
     headers: { "content-type": "application/json" },
     method: "POST",
@@ -23,7 +25,7 @@ export async function createSnippet(state: SnippetState) {
 }
 
 export async function getSnippet(id: string) {
-  const response = await fetch(`/api/snippets/${encodeURIComponent(id)}`);
+  const response = await fetch(`${apiUrl}/api/snippets/${encodeURIComponent(id)}`);
   if (!response.ok) throw new Error("This shared snippet is unavailable or has expired.");
 
   const value = (await response.json()) as Record<string, unknown>;

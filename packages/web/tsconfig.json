@@ -14,7 +14,7 @@
     "strict": true,
     "baseUrl": ".",
     "paths": { "@/*": ["./*"] },
-    "types": ["node"]
+    "types": ["node", "vite/client"]
   },
   "include": ["src", "components", "lib", "vite.config.ts"]
 }
