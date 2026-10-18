@@ -8,6 +8,7 @@ dist/
 .env
 .env.*
 !.env.example
+.dev.vars
 
 # Test output
 coverage/
@@ -29,3 +30,4 @@ pnpm-debug.log*
 *.tsbuildinfo
 
 target
+packages/api/build/

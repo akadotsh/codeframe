@@ -6,9 +6,10 @@
   "workspaces": ["packages/*"],
   "scripts": {
     "dev": "npm run dev --workspace @code-frame/web",
-    "dev:api": "cargo run --manifest-path packages/api/Cargo.toml",
+    "dev:api": "wrangler dev",
     "build": "npm run build --workspaces --if-present",
-    "build:api": "cargo build --manifest-path packages/api/Cargo.toml",
+    "build:api": "cd packages/api && worker-build --release",
+    "deploy:api": "wrangler deploy",
     "preview": "npm run preview --workspace @code-frame/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
@@ -20,5 +21,8 @@
   },
   "engines": {
     "node": ">=22.13.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.136.0"
   }
 }
