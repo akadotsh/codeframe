@@ -75,12 +75,12 @@ struct UpstashResponse<T> {
 }
 
 struct Store {
-    public_web_url: String,
     token: String,
     url: String,
 }
 
 pub async fn create(request: &mut Request, env: &Env) -> Result<Response> {
+    let public_web_url = request.url()?.origin().ascii_serialization();
     let input = match request.json::<CreateSnippet>().await {
         Ok(input) => input,
         Err(_) => return api_error(422, "request body must be valid JSON"),
@@ -89,7 +89,7 @@ pub async fn create(request: &mut Request, env: &Env) -> Result<Response> {
         return api_error(422, error);
     }
 
-    match Store::new(env)?.create(input).await {
+    match Store::new(env)?.create(input, &public_web_url).await {
         Ok(created) => Ok(Response::from_json(&created)?.with_status(201)),
         Err(error) => api_error(503, error),
     }
@@ -106,7 +106,6 @@ pub async fn get(id: &str, env: &Env) -> Result<Response> {
 impl Store {
     fn new(env: &Env) -> Result<Self> {
         Ok(Self {
-            public_web_url: env.var("APP_URL")?.to_string().trim_end_matches('/').into(),
             token: env.secret("UPSTASH_REDIS_REST_TOKEN")?.to_string(),
             url: env
                 .secret("UPSTASH_REDIS_REST_URL")?
@@ -119,6 +118,7 @@ impl Store {
     async fn create(
         &self,
         input: CreateSnippet,
+        public_web_url: &str,
     ) -> std::result::Result<CreatedSnippet, &'static str> {
         let mut snippet = Snippet {
             id: String::new(),
@@ -148,7 +148,7 @@ impl Store {
                 .await?;
             if result.as_deref() == Some("OK") {
                 return Ok(CreatedSnippet {
-                    download_url: format!("{}/download/{}", self.public_web_url, snippet.id),
+                    download_url: format!("{public_web_url}/download/{}", snippet.id),
                 });
             }
         }

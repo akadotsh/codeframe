@@ -12,17 +12,14 @@ Upstash remains the snippet store, while image downloads are rendered in the bro
    npx wrangler login
    ```
 
-2. Keep `APP_URL` set to the existing `code-frame` Worker URL. Download links open its
-   `/download/:id` route.
-
-3. Add the Upstash credentials as Worker secrets:
+2. Add the Upstash credentials as Worker secrets:
 
    ```bash
    npx wrangler secret put UPSTASH_REDIS_REST_URL
    npx wrangler secret put UPSTASH_REDIS_REST_TOKEN
    ```
 
-4. Build and deploy the combined frontend and API to the existing `code-frame` Worker:
+3. Build and deploy the combined frontend and API to the existing `code-frame` Worker:
 
    ```bash
    npm run deploy:cloudflare
@@ -36,8 +33,9 @@ Connect the GitHub repository to the existing `code-frame` Worker and use:
 - Build command: `npm install && cargo install --locked worker-build@^0.8`
 - Deploy command: `npm run deploy:cloudflare`
 
-Add both Upstash values as secrets on the `code-frame` Worker. Remove the old `VITE_API_URL`
-build variable if present; the frontend now calls `/api` on its own origin.
+Add both Upstash values as secrets on the `code-frame` Worker. Download links use the incoming
+request's origin, and the frontend calls `/api` on that same origin. Remove any old `APP_URL` or
+`VITE_API_URL` variables if present.
 
 ## Local Cloudflare test
 

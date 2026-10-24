@@ -15,8 +15,5 @@
     "command": "worker-build --release",
     "cwd": "./packages/api",
     "watch_dir": "./packages/api/src"
-  },
-  "vars": {
-    "APP_URL": "https://codeframe.akashprasad.xyz"
   }
 }
