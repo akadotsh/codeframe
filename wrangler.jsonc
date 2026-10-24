@@ -17,6 +17,6 @@
     "watch_dir": "./packages/api/src"
   },
   "vars": {
-    "APP_URL": "https://code-frame.devakash256.workers.dev"
+    "APP_URL": "https://codeframe.akashprasad.xyz"
   }
 }
