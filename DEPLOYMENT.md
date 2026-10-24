@@ -1,6 +1,6 @@
 # Cloudflare deployment
 
-Cloudflare Pages serves the existing web app. A separate Cloudflare Worker runs only the Rust API.
+One Cloudflare Worker serves the web app as static assets and runs the Rust API on `/api/*`.
 Upstash remains the snippet store, while image downloads are rendered in the browser.
 
 ## First deployment
@@ -12,8 +12,8 @@ Upstash remains the snippet store, while image downloads are rendered in the bro
    npx wrangler login
    ```
 
-2. Replace `APP_URL` in `wrangler.jsonc` with the existing Cloudflare Pages URL. Download links
-   open the `/download/:id` route on that web app.
+2. Keep `APP_URL` set to the existing `code-frame` Worker URL. Download links open its
+   `/download/:id` route.
 
 3. Add the Upstash credentials as Worker secrets:
 
@@ -22,37 +22,27 @@ Upstash remains the snippet store, while image downloads are rendered in the bro
    npx wrangler secret put UPSTASH_REDIS_REST_TOKEN
    ```
 
-4. Deploy:
+4. Build and deploy the combined frontend and API to the existing `code-frame` Worker:
 
    ```bash
-   npm run deploy:api
+   npm run deploy:cloudflare
    ```
 
 ## Automatic deployments
 
-Connect the GitHub repository to a separate Worker and use:
+Connect the GitHub repository to the existing `code-frame` Worker and use:
 
 - Production branch: `main`
-- Build command: `cargo install --locked worker-build@^0.8`
-- Deploy command: `npx wrangler deploy`
+- Build command: `npm install && cargo install --locked worker-build@^0.8`
+- Deploy command: `npm run deploy:cloudflare`
 
-Add both Upstash values under the Worker build/deployment secrets. This deployment does not build
-or upload the web app.
-
-## Connect the Pages app
-
-Set this build variable on the existing Pages project, then redeploy the Pages app once:
-
-```text
-VITE_API_URL=https://code-frame-api.<your-subdomain>.workers.dev
-```
-
-Use the URL printed by Wrangler after the API deployment.
+Add both Upstash values as secrets on the `code-frame` Worker. Remove the old `VITE_API_URL`
+build variable if present; the frontend now calls `/api` on its own origin.
 
 ## Local Cloudflare test
 
 Add the two Upstash values to `.dev.vars`, then run:
 
 ```bash
-npm run dev:api
+npm run dev:cloudflare
 ```

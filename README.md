@@ -12,7 +12,7 @@ output.
 ```bash
 npm install
 cp .env.example .dev.vars
-npm run dev:api
+npm run dev:cloudflare
 ```
 
 ## API
