@@ -10,10 +10,5 @@
     "directory": "./packages/web/dist",
     "not_found_handling": "single-page-application",
     "run_worker_first": ["/api/*", "/health"]
-  },
-  "build": {
-    "command": "worker-build --release",
-    "cwd": "./packages/api",
-    "watch_dir": "./packages/api/src"
   }
 }

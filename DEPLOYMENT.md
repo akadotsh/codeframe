@@ -30,12 +30,14 @@ Upstash remains the snippet store, while image downloads are rendered in the bro
 Connect the GitHub repository to the existing `code-frame` Worker and use:
 
 - Production branch: `main`
-- Build command: `npm install && cargo install --locked worker-build@^0.8`
-- Deploy command: `npm run deploy:cloudflare`
+- Build command: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && . "$HOME/.cargo/env" && rustup target add wasm32-unknown-unknown && cargo install --locked worker-build@^0.8 && npm run build:cloudflare`
+- Deploy command: `npx wrangler deploy`
 
-Add both Upstash values as secrets on the `code-frame` Worker. Download links use the incoming
-request's origin, and the frontend calls `/api` on that same origin. Remove any old `APP_URL` or
-`VITE_API_URL` variables if present.
+The build command installs Rust because Workers Builds provides Node but not Cargo, then builds
+the frontend and Rust Worker explicitly. Workers Builds does not run the `[build]` section from
+`wrangler.jsonc`. Add both Upstash values as secrets on the `code-frame` Worker. Download links
+use the incoming request's origin, and the frontend calls `/api` on that same origin. Remove any
+old `APP_URL` or `VITE_API_URL` variables if present.
 
 ## Local Cloudflare test
 

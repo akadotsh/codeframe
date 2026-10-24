@@ -7,10 +7,11 @@
   "scripts": {
     "dev": "npm run dev --workspace @code-frame/web",
     "dev:api": "wrangler dev",
-    "dev:cloudflare": "npm run build && wrangler dev",
+    "dev:cloudflare": "npm run build:cloudflare && wrangler dev",
     "build": "npm run build --workspaces --if-present",
     "build:api": "cd packages/api && worker-build --release",
-    "deploy:cloudflare": "npm run build && wrangler deploy",
+    "build:cloudflare": "npm run build && npm run build:api",
+    "deploy:cloudflare": "npm run build:cloudflare && wrangler deploy",
     "preview": "npm run preview --workspace @code-frame/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
