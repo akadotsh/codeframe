@@ -9,12 +9,12 @@ export type Palette = {
 
 export const palettes: Palette[] = [
   {
-    name: "Graphite",
-    colors: ["#282a3a", "#5b526e"],
-    card: "#111116",
-    text: "#f1eff5",
-    muted: "#74717e",
-    accent: "#a79af2",
+    name: "Warm Graphite",
+    colors: ["#343632", "#55574f"],
+    card: "#181917",
+    text: "#ecece6",
+    muted: "#85877f",
+    accent: "#b6bb9e",
   },
   {
     name: "Tide",
@@ -49,12 +49,12 @@ export const palettes: Palette[] = [
     accent: "#c3c3c7",
   },
   {
-    name: "Rosewood",
-    colors: ["#4c2c3b", "#885865"],
-    card: "#171013",
-    text: "#f6ecef",
-    muted: "#8b727b",
-    accent: "#d7a2b5",
+    name: "Cedar",
+    colors: ["#3b342f", "#6f5948"],
+    card: "#171411",
+    text: "#f1ece5",
+    muted: "#8f8277",
+    accent: "#c5a580",
   },
   {
     name: "Forest",

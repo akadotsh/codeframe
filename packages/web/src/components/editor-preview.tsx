@@ -100,15 +100,20 @@ export function EditorPreview(props: EditorPreviewProps) {
               >
                 <div {...stylex.props(previewStyles.windowSide)}>
                   {props.mode === "window" ? (
-                    <span {...stylex.props(previewStyles.traffic)}>
-                      <i {...stylex.props(previewStyles.trafficLight, previewStyles.trafficRed)} />
-                      <i
-                        {...stylex.props(previewStyles.trafficLight, previewStyles.trafficYellow)}
-                      />
-                      <i
-                        {...stylex.props(previewStyles.trafficLight, previewStyles.trafficGreen)}
-                      />
-                    </span>
+                    <svg
+                      {...stylex.props(previewStyles.windowMark)}
+                      viewBox="0 0 20 20"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ color: palette.accent }}
+                      aria-hidden="true"
+                    >
+                      <path d="M5 2.75h6l4 4V17a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V3.75a1 1 0 0 1 1-1Z" />
+                      <path d="M11 3v4h4m-7 4h5m-5 3h5" />
+                    </svg>
                   ) : (
                     <span
                       {...stylex.props(previewStyles.terminalGlyph)}

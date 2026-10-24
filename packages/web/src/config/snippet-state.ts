@@ -41,7 +41,7 @@ export const defaultSnippetState: SnippetState = {
   mode: "window",
   padding: 64,
   paletteIndex: 0,
-  radius: 22,
+  radius: 6,
   syntaxTheme: "github-dark-default",
   title: "hello-world.ts",
   titleBar: true,

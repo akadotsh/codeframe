@@ -38,7 +38,7 @@ const styles = stylex.create({
     lineHeight: "inherit",
     tabSize: 2,
     whiteSpace: "pre",
-    "::selection": { backgroundColor: "rgba(143, 131, 223, 0.3)" },
+    "::selection": { backgroundColor: "rgba(174, 188, 145, 0.32)" },
   },
 });
 

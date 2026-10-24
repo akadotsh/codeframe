@@ -167,6 +167,19 @@ export function App({ initialState }: { initialState?: SnippetState }) {
     <main {...stylex.props(appStyles.shell, resizing && appStyles.resizing)}>
       <header {...stylex.props(appStyles.topbar)}>
         <a {...stylex.props(appStyles.brand)} href="/" aria-label="Code Frame home">
+          <svg
+            {...stylex.props(appStyles.brandMark)}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M8 4H5v4m11-4h3v4m0 8v4h-3M8 20H5v-4" />
+            <path d="m10 9-3 3 3 3m4-6 3 3-3 3" />
+          </svg>
           <span>Code Frame</span>
         </a>
         <div {...stylex.props(appStyles.topbarActions)}>
@@ -179,7 +192,11 @@ export function App({ initialState }: { initialState?: SnippetState }) {
             <RotateCcw {...stylex.props(appStyles.utilityIcon)} />
             <span {...stylex.props(appStyles.utilityLabel)}>Reset</span>
           </button>
-          <button {...stylex.props(appStyles.utilityButton)} type="button" onClick={copyLink}>
+          <button
+            {...stylex.props(appStyles.utilityButton, appStyles.copyButton)}
+            type="button"
+            onClick={copyLink}
+          >
             {copied ? (
               <Check {...stylex.props(appStyles.utilityIcon)} />
             ) : (
