@@ -167,19 +167,12 @@ export function App({ initialState }: { initialState?: SnippetState }) {
     <main {...stylex.props(appStyles.shell, resizing && appStyles.resizing)}>
       <header {...stylex.props(appStyles.topbar)}>
         <a {...stylex.props(appStyles.brand)} href="/" aria-label="Code Frame home">
-          <svg
+          <img
             {...stylex.props(appStyles.brandMark)}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            src="/code-frame-logo-header.png"
+            alt=""
             aria-hidden="true"
-          >
-            <path d="M8 4H5v4m11-4h3v4m0 8v4h-3M8 20H5v-4" />
-            <path d="m10 9-3 3 3 3m4-6 3 3-3 3" />
-          </svg>
+          />
           <span>Code Frame</span>
         </a>
         <div {...stylex.props(appStyles.topbarActions)}>
