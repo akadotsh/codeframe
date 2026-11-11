@@ -9,12 +9,12 @@ export type Palette = {
 
 export const palettes: Palette[] = [
   {
-    name: "Warm Graphite",
-    colors: ["#343632", "#55574f"],
-    card: "#181917",
-    text: "#ecece6",
-    muted: "#85877f",
-    accent: "#b6bb9e",
+    name: "Nocturne",
+    colors: ["#4c205f", "#c64f52"],
+    card: "#111016",
+    text: "#f4eef5",
+    muted: "#a99aac",
+    accent: "#f2ad77",
   },
   {
     name: "Tide",

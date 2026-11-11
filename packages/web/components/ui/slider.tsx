@@ -20,9 +20,9 @@ const styles = stylex.create({
     flexGrow: 1,
     overflow: "hidden",
     borderRadius: 999,
-    backgroundColor: "#343832",
+    backgroundColor: "#34363d",
   },
-  range: { position: "absolute", height: "100%", backgroundColor: "#aebc91" },
+  range: { position: "absolute", height: "100%", backgroundColor: "#b9bdc7" },
   thumb: {
     boxSizing: "border-box",
     width: 15,
