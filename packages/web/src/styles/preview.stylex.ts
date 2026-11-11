@@ -5,8 +5,8 @@ export const previewStyles = stylex.create({
     boxSizing: "border-box",
     minWidth: 0,
     padding: {
-      default: "20px 22px 22px",
-      "@media (max-width: 640px)": "14px 12px",
+      default: "28px 32px",
+      "@media (max-width: 640px)": "18px 12px",
     },
     display: "flex",
     flexDirection: "column",
@@ -34,19 +34,11 @@ export const previewStyles = stylex.create({
     isolation: "isolate",
     opacity: 1,
     transform: "translateY(0)",
-    borderRadius: 6,
-    boxShadow: "0 24px 70px rgba(0, 0, 0, 0.24)",
+    borderRadius: 10,
+    boxShadow: "0 16px 48px rgba(0, 0, 0, 0.18)",
     transition:
       "opacity 220ms cubic-bezier(0.23, 1, 0.32, 1), transform 220ms cubic-bezier(0.23, 1, 0.32, 1)",
     marginInline: { "@media (max-width: 820px)": "auto" },
-    "::before": {
-      content: '""',
-      position: "absolute",
-      inset: 0,
-      backgroundImage:
-        "linear-gradient(145deg, rgba(255, 255, 255, 0.08), transparent 38%, rgba(0, 0, 0, 0.08))",
-      zIndex: -1,
-    },
     "@media (prefers-reduced-motion: reduce)": {
       transform: "none",
       transition: "opacity 160ms ease",
@@ -62,7 +54,7 @@ export const previewStyles = stylex.create({
     borderWidth: 1,
     borderStyle: "solid",
     borderColor: "rgba(255, 255, 255, 0.12)",
-    borderRadius: 0,
+    borderRadius: 8,
     opacity: 0,
     transform: "translate(-50%, 5px)",
     backgroundColor: "rgba(22, 24, 21, 0.92)",
@@ -80,19 +72,11 @@ export const previewStyles = stylex.create({
     },
   },
   indicatorVisible: { opacity: 1, transform: "translate(-50%, 0)" },
-  grain: {
-    position: "absolute",
-    inset: 0,
-    zIndex: -1,
-    opacity: 0.08,
-    backgroundImage:
-      "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.28'/%3E%3C/svg%3E\")",
-  },
   codeWindow: {
     minHeight: 380,
     overflow: "hidden",
     position: "relative",
-    boxShadow: "0 20px 45px rgba(0, 0, 0, 0.3)",
+    boxShadow: "0 12px 30px rgba(0, 0, 0, 0.24)",
     transition: "border-radius 180ms cubic-bezier(0.23, 1, 0.32, 1), background-color 180ms ease",
     "@media (prefers-reduced-motion: reduce)": {
       transform: "none",
@@ -101,7 +85,7 @@ export const previewStyles = stylex.create({
   },
   windowReveal: {
     display: "grid",
-    gridTemplateRows: "64px",
+    gridTemplateRows: "48px",
     overflow: "hidden",
     transition: "grid-template-rows 220ms cubic-bezier(0.77, 0, 0.175, 1)",
     "@media (prefers-reduced-motion: reduce)": {
@@ -112,7 +96,7 @@ export const previewStyles = stylex.create({
   windowRevealHidden: { gridTemplateRows: "0px" },
   windowBar: {
     boxSizing: "border-box",
-    height: 64,
+    height: 48,
     position: "relative",
     display: "grid",
     gridTemplateColumns: "1fr auto 1fr",
@@ -121,7 +105,7 @@ export const previewStyles = stylex.create({
     borderBottomStyle: "solid",
     borderBottomColor: "rgba(255, 255, 255, 0.045)",
     backgroundColor: "rgba(255, 255, 255, 0.015)",
-    paddingInline: 23,
+    paddingInline: 18,
     transition: "opacity 160ms ease, transform 220ms cubic-bezier(0.77, 0, 0.175, 1)",
     "@media (prefers-reduced-motion: reduce)": {
       transform: "none",
@@ -141,15 +125,12 @@ export const previewStyles = stylex.create({
     borderWidth: 0,
     outline: "none",
     textAlign: "center",
-    color: "#92909a",
     backgroundColor: "transparent",
     fontFamily: '"Geist Mono Variable", ui-monospace, monospace',
     fontSize: 12,
-    ":focus": { color: "#fff" },
   },
   language: {
     justifySelf: "end",
-    color: "#73717b",
     fontFamily: '"Geist Mono Variable", ui-monospace, monospace',
     fontSize: 10,
     textTransform: "uppercase",

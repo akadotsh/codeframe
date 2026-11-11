@@ -75,7 +75,6 @@ export function EditorPreview(props: EditorPreviewProps) {
           >
             {frameMetrics.width}px
           </output>
-          <div {...stylex.props(previewStyles.grain)} aria-hidden="true" />
           <div
             {...stylex.props(previewStyles.codeWindow)}
             style={{
@@ -111,8 +110,8 @@ export function EditorPreview(props: EditorPreviewProps) {
                       style={{ color: palette.accent }}
                       aria-hidden="true"
                     >
-                      <path d="M5 2.75h6l4 4V17a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V3.75a1 1 0 0 1 1-1Z" />
-                      <path d="M11 3v4h4m-7 4h5m-5 3h5" />
+                      <path d="M8 4H5v4m11-4h3v4m0 8v4h-3M8 20H5v-4" />
+                      <path d="m10 9-3 3 3 3m4-6 3 3-3 3" />
                     </svg>
                   ) : (
                     <span
@@ -129,8 +128,14 @@ export function EditorPreview(props: EditorPreviewProps) {
                   onChange={(event) => props.onTitleChange(event.target.value)}
                   aria-label="Snippet title"
                   tabIndex={props.titleBar ? 0 : -1}
+                  style={{ color: themeColors.foreground }}
                 />
-                <span {...stylex.props(previewStyles.language)}>{props.language}</span>
+                <span
+                  {...stylex.props(previewStyles.language)}
+                  style={{ color: themeColors.foreground }}
+                >
+                  {props.language}
+                </span>
               </div>
             </div>
             <div {...stylex.props(previewStyles.editorShell)} style={{ fontSize: props.fontSize }}>

@@ -17,8 +17,8 @@ export const appearanceStyles = stylex.create({
     borderTopColor: "rgba(255, 255, 255, 0.08)",
     backgroundColor: "transparent",
     padding: {
-      default: "27px 22px 36px",
-      "@media (max-width: 640px)": "24px 18px",
+      default: "24px 20px 32px",
+      "@media (max-width: 640px)": "22px 18px",
     },
     overflowY: "auto",
     display: {
@@ -36,12 +36,14 @@ export const appearanceStyles = stylex.create({
     justifyContent: "space-between",
     marginBottom: 14,
   },
-  headingTitle: { margin: 0, fontSize: 18, fontWeight: 590, letterSpacing: "-0.02em" },
-  headingText: { margin: "4px 0 0", color: "#a6a398", fontSize: 13 },
+  headingTitle: { margin: 0, fontSize: 15, fontWeight: 580 },
+  headingText: { margin: "3px 0 0", color: "#a6a398", fontSize: 12 },
   group: {
-    marginTop: 10,
-    padding: 15,
-    backgroundColor: "transparent",
+    marginTop: 8,
+    padding: "12px 0",
+    borderBottomWidth: 1,
+    borderBottomStyle: "solid",
+    borderBottomColor: "#33353b",
   },
   label: {
     minHeight: 22,
@@ -50,8 +52,8 @@ export const appearanceStyles = stylex.create({
     alignItems: "center",
     justifyContent: "space-between",
     color: "#d2cfc5",
-    fontSize: 13,
-    fontWeight: 520,
+    fontSize: 12,
+    fontWeight: 540,
   },
   labelValue: { color: "#8c897e", fontSize: 12, fontWeight: 500 },
   paletteExpand: {
@@ -63,7 +65,7 @@ export const appearanceStyles = stylex.create({
     borderWidth: 1,
     borderStyle: "solid",
     borderColor: "transparent",
-    borderRadius: 4,
+    borderRadius: 7,
     padding: "4px 7px",
     color: "#a6a398",
     backgroundColor: "transparent",
@@ -84,7 +86,7 @@ export const appearanceStyles = stylex.create({
     ":focus-visible": {
       outlineWidth: 2,
       outlineStyle: "solid",
-      outlineColor: "#aebc91",
+      outlineColor: "#b9bdc7",
       outlineOffset: 3,
     },
   },
@@ -105,7 +107,7 @@ export const appearanceStyles = stylex.create({
     borderWidth: 2,
     borderStyle: "solid",
     borderColor: "transparent",
-    borderRadius: 4,
+    borderRadius: 7,
     cursor: "pointer",
     color: "inherit",
     boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.11)",
@@ -115,7 +117,7 @@ export const appearanceStyles = stylex.create({
     ":focus-visible": {
       outlineWidth: 2,
       outlineStyle: "solid",
-      outlineColor: "#aebc91",
+      outlineColor: "#b9bdc7",
       outlineOffset: 3,
     },
     "@media (prefers-reduced-motion: reduce)": {
@@ -129,9 +131,8 @@ export const appearanceStyles = stylex.create({
     animationTimingFunction: "cubic-bezier(0.23, 1, 0.32, 1)",
   },
   paletteActive: {
-    borderColor: "#e9ecdf",
-    boxShadow:
-      "0 0 0 2px rgba(17, 17, 15, 0.9), 0 0 0 3px rgba(174, 188, 145, 0.75), 0 7px 18px rgba(0, 0, 0, 0.22)",
+    borderColor: "#f0eee7",
+    boxShadow: "0 0 0 2px rgba(17, 17, 15, 0.9), 0 0 0 3px rgba(240, 238, 231, 0.62), 0 7px 18px rgba(0, 0, 0, 0.22)",
   },
   paletteCheck: {
     width: 15,
@@ -147,8 +148,8 @@ export const appearanceStyles = stylex.create({
     placeItems: "center",
     borderWidth: 1,
     borderStyle: "solid",
-    borderColor: "#3d3d36",
-    borderRadius: 4,
+    borderColor: "#3d4048",
+    borderRadius: 7,
     color: "#a6a398",
     backgroundColor: "rgba(255, 255, 255, 0.025)",
     cursor: "pointer",
@@ -165,7 +166,7 @@ export const appearanceStyles = stylex.create({
     ":focus-visible": {
       outlineWidth: 2,
       outlineStyle: "solid",
-      outlineColor: "#aebc91",
+      outlineColor: "#b9bdc7",
       outlineOffset: 3,
     },
     "@media (prefers-reduced-motion: reduce)": {
@@ -174,10 +175,10 @@ export const appearanceStyles = stylex.create({
     },
   },
   ratioActive: {
-    borderColor: "#9ca987",
+    borderColor: "#858791",
     color: "#f0f0e7",
-    backgroundColor: "#33372e",
-    boxShadow: "inset 0 0 0 1px #45493d",
+    backgroundColor: "#2b2d33",
+    boxShadow: "inset 0 0 0 1px #41434a",
   },
   switchList: {
     marginTop: 10,
@@ -193,11 +194,11 @@ export const appearanceStyles = stylex.create({
     gap: 20,
     borderBottomWidth: 1,
     borderBottomStyle: "solid",
-    borderBottomColor: "#34342f",
+    borderBottomColor: "#33353b",
     cursor: "pointer",
   },
   switchItemLast: { borderBottomWidth: 0 },
   switchCopy: { display: "grid", gap: 2 },
-  switchTitle: { color: "#dedbd2", fontSize: 13, fontWeight: 580 },
+  switchTitle: { color: "#dedbd2", fontSize: 12, fontWeight: 560 },
   switchText: { color: "#a6a398", fontSize: 11 },
 });
