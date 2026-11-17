@@ -86,7 +86,7 @@ const styles = stylex.create({
     backgroundColor: "transparent",
     color: "#f0eee7",
     fontFamily: "inherit",
-    fontSize: 12,
+    fontSize: 16,
     "::placeholder": { color: "#a6a398" },
   },
   options: { maxHeight: 264, overflowY: "auto" },
@@ -171,9 +171,9 @@ export function SearchableSelect<Value extends string>({
         <button
           {...stylex.props(styles.trigger)}
           id={id}
-          role="combobox"
           aria-expanded={open}
           aria-controls={optionsId}
+          aria-haspopup="dialog"
         >
           <span>{selectedOption.label}</span>
           <ChevronDown
@@ -199,13 +199,12 @@ export function SearchableSelect<Value extends string>({
               aria-label={searchLabel}
             />
           </div>
-          <div {...stylex.props(styles.options)} id={optionsId} role="listbox">
+          <div {...stylex.props(styles.options)} id={optionsId}>
             {filteredOptions.map((option) => (
               <button
                 {...stylex.props(styles.option)}
                 key={option.value}
-                role="option"
-                aria-selected={option.value === value}
+                aria-pressed={option.value === value}
                 onPointerEnter={() => onPreview?.(option.value)}
                 onFocus={() => onPreview?.(option.value)}
                 onClick={() => selectOption(option.value)}
